@@ -1,20 +1,39 @@
 import { MoreHorizontal } from 'lucide-react';
 
-const ReportsChart = () => {
-  const dataPoints = [
-    { time: '10am', value: 65 },
-    { time: '11am', value: 45 },
-    { time: '12pm', value: 70 },
-    { time: '01pm', value: 55 },
-    { time: '02pm', value: 90 },
-    { time: '03pm', value: 65 },
-    { time: '04pm', value: 50 },
-    { time: '05pm', value: 75 },
-    { time: '06pm', value: 65 },
-    { time: '07pm', value: 85 },
-  ];
+interface RegistrationDataPoint {
+  date: string;
+  registrations: number;
+}
 
-  const maxValue = 100;
+interface ReportsChartProps {
+  registrationData?: RegistrationDataPoint[];
+  days?: number;
+}
+
+const ReportsChart = ({ registrationData = [], days = 30 }: ReportsChartProps) => {
+  // Transform registration data for chart display
+  const dataPoints = registrationData.length > 0
+    ? registrationData.map((item) => {
+        const date = new Date(item.date);
+        return {
+          time: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          value: item.registrations,
+        };
+      })
+    : [
+        { time: '10am', value: 65 },
+        { time: '11am', value: 45 },
+        { time: '12pm', value: 70 },
+        { time: '01pm', value: 55 },
+        { time: '02pm', value: 90 },
+        { time: '03pm', value: 65 },
+        { time: '04pm', value: 50 },
+        { time: '05pm', value: 75 },
+        { time: '06pm', value: 65 },
+        { time: '07pm', value: 85 },
+      ];
+
+  const maxValue = Math.max(...dataPoints.map((p) => p.value), 100);
   const height = 300;
 
   const createSmoothPath = (points: { time: string; value: number }[]) => {
@@ -39,7 +58,10 @@ const ReportsChart = () => {
   return (
     <div className="bg-white rounded-2xl p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-bold text-gray-900">Reports</h2>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">User Registrations</h2>
+          <p className="text-xs text-gray-500">Last {days} days</p>
+        </div>
         <button className="text-gray-400 hover:text-gray-600">
           <MoreHorizontal size={20} />
         </button>

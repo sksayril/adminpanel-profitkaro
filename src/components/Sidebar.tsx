@@ -3,16 +3,13 @@ import {
   LayoutGrid,
   CreditCard,
   Users,
-  Bell,
-  Settings,
-  ShoppingBag,
-  User,
   Shield,
   UserCheck,
   Calendar,
   Smartphone,
   Coins,
   Ticket,
+  Wallet,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,15 +25,12 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
     { icon: CreditCard, label: 'Payments', path: '/payments' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: Smartphone, label: 'Apps Install', path: '/apps-install' },
-    { icon: Bell, label: 'Notifications', path: '/notifications' },
     { icon: Shield, label: 'Captcha Settings', path: '/captcha-settings' },
     { icon: UserCheck, label: 'Referral Settings', path: '/referral-settings' },
     { icon: Calendar, label: 'Daily Bonus Settings', path: '/daily-bonus-settings' },
     { icon: Ticket, label: 'Scratch Card Settings', path: '/scratch-card-settings' },
     { icon: Coins, label: 'Coin Conversion', path: '/coin-conversion' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
-    { icon: ShoppingBag, label: 'Orders', path: '/orders' },
-    { icon: User, label: 'Profile', path: '/profile' },
+    { icon: Wallet, label: 'Withdrawal Settings', path: '/withdrawal-settings' },
   ];
 
   const handleNavigation = (path: string) => {

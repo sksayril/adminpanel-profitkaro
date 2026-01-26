@@ -13,6 +13,7 @@ import WithdrawalRequests from './pages/WithdrawalRequests';
 import Users from './pages/Users';
 import AppsInstall from './pages/AppsInstall';
 import CoinConversionSettings from './pages/CoinConversionSettings';
+import WithdrawalSettings from './pages/WithdrawalSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -105,6 +106,14 @@ function App() {
         element={
           <ProtectedRoute>
             <CoinConversionSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/withdrawal-settings"
+        element={
+          <ProtectedRoute>
+            <WithdrawalSettings />
           </ProtectedRoute>
         }
       />

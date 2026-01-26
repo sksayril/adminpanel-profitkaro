@@ -1,5 +1,6 @@
 // const BASE_URL = 'https://7cvccltb-3100.inc1.devtunnels.ms/admin';
 const BASE_URL = 'https://apiprofit.seotube.in/admin';
+// const BASE_URL = 'http://localhost:3111/admin';
 
 export interface LoginRequest {
   Email: string;
@@ -681,6 +682,83 @@ export const setScratchCardSettings = async (data: ScratchCardSettingsRequest): 
 // Get Scratch Card Settings API
 export const getScratchCardSettings = async (): Promise<ScratchCardSettingsResponse> => {
   const response = await fetch(`${BASE_URL}/scratchcard/settings`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Withdrawal Threshold Settings Interfaces
+export interface WithdrawalThresholdRequest {
+  MinimumWithdrawalAmount: number;
+}
+
+export interface WithdrawalThresholdResponse {
+  message: string;
+  data: {
+    MinimumWithdrawalAmount: number;
+    updatedAt?: string;
+  };
+}
+
+// Set Withdrawal Threshold API
+export const setWithdrawalThreshold = async (data: WithdrawalThresholdRequest): Promise<WithdrawalThresholdResponse> => {
+  const response = await fetch(`${BASE_URL}/withdrawal/threshold`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Get Withdrawal Threshold API
+export const getWithdrawalThreshold = async (): Promise<WithdrawalThresholdResponse> => {
+  const response = await fetch(`${BASE_URL}/withdrawal/threshold`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Dashboard Statistics Interfaces
+export interface DashboardStatistics {
+  users: {
+    totalUsers: number;
+    todayRegistrations: number;
+    recentRegistrations: number;
+  };
+  wallet: {
+    totalWalletBalance: number;
+    totalCoins: number;
+  };
+  withdrawals: {
+    totalWithdrawals: number;
+    statistics: {
+      pending: { count: number; totalAmount: number };
+      approved: { count: number; totalAmount: number };
+      rejected: { count: number; totalAmount: number };
+    };
+  };
+  registrationChart: {
+    days: number;
+    data: Array<{
+      date: string;
+      registrations: number;
+    }>;
+  };
+}
+
+export interface DashboardResponse {
+  message: string;
+  data: DashboardStatistics;
+}
+
+// Get Dashboard Statistics API
+export const getDashboardStatistics = async (days: number = 30): Promise<DashboardResponse> => {
+  const response = await fetch(`${BASE_URL}/dashboard?days=${days}`, {
     method: 'GET',
     headers: getAuthHeaders(),
   });
