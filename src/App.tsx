@@ -14,6 +14,7 @@ import Users from './pages/Users';
 import AppsInstall from './pages/AppsInstall';
 import CoinConversionSettings from './pages/CoinConversionSettings';
 import WithdrawalSettings from './pages/WithdrawalSettings';
+import SpinWheelSettings from './pages/SpinWheelSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -117,7 +118,15 @@ function App() {
           </ProtectedRoute>
         }
       />
-  
+      <Route
+        path="/spin-wheel-settings"
+        element={
+          <ProtectedRoute>
+            <SpinWheelSettings />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Default redirect */}
       <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
     </Routes>

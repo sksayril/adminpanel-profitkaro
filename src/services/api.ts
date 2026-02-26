@@ -1,4 +1,4 @@
-// const BASE_URL = 'https://7cvccltb-3100.inc1.devtunnels.ms/admin';
+// const BASE_URL = 'https://7cvccltb-3111.inc1.devtunnels.ms/admin';
 const BASE_URL = 'https://apiprofit.seotube.in/admin';
 // const BASE_URL = 'http://localhost:3111/admin';
 
@@ -169,6 +169,41 @@ export const getCaptchaSettings = async (): Promise<CaptchaSettingsResponse> => 
   return handleApiResponse(response);
 };
 
+// Daily Spin Settings Interfaces
+export interface DailySpinSettingsRequest {
+  DailySpinLimit: number;
+}
+
+export interface DailySpinSettingsResponse {
+  message: string;
+  data: {
+    _id: string;
+    DailySpinLimit: number;
+    __v?: number;
+  };
+}
+
+// Set Daily Spin Settings API
+export const setDailySpinSettings = async (data: DailySpinSettingsRequest): Promise<DailySpinSettingsResponse> => {
+  const response = await fetch(`${BASE_URL}/dailyspin/settings`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Get Daily Spin Settings API
+export const getDailySpinSettings = async (): Promise<DailySpinSettingsResponse> => {
+  const response = await fetch(`${BASE_URL}/dailyspin/settings`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
 // Referral Settings Interfaces
 export interface ReferralSettingsRequest {
   RewardForNewUser: number;
@@ -308,10 +343,10 @@ export interface UpdateWithdrawalStatusResponse {
 
 // Get Withdrawal Requests API
 export const getWithdrawalRequests = async (status?: 'Pending' | 'Approved' | 'Rejected'): Promise<WithdrawalRequestsResponse> => {
-  const url = status 
+  const url = status
     ? `${BASE_URL}/withdrawal/requests?status=${status}`
     : `${BASE_URL}/withdrawal/requests`;
-  
+
   const response = await fetch(url, {
     method: 'GET',
     headers: getAuthHeaders(),
@@ -380,9 +415,166 @@ export const getUsers = async (params?: GetUsersParams): Promise<UsersResponse> 
   if (params?.search) queryParams.append('search', params.search);
 
   const url = `${BASE_URL}/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  
+
   const response = await fetch(url, {
     method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// User Details Interfaces
+export interface UserWithdrawalRequest {
+  requestId: string;
+  amount: number;
+  paymentMethod: 'UPI' | 'BankTransfer';
+  status: 'Pending' | 'Approved' | 'Rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserStatistics {
+  referralCount: number;
+  totalWithdrawalRequests: number;
+  pendingWithdrawals: number;
+  approvedWithdrawals: number;
+  rejectedWithdrawals: number;
+  totalWithdrawn: number;
+  totalAppSubmissions: number;
+  approvedAppSubmissions: number;
+  pendingAppSubmissions: number;
+  rejectedAppSubmissions: number;
+  totalEarningsFromApps: number;
+}
+
+export interface UserDetails {
+  userId: string;
+  mobileNumber: string;
+  password?: string;
+  deviceId: string;
+  referCode: string;
+  coins: number;
+  walletBalance: number;
+  referredBy: string | null;
+  isBlocked?: boolean;
+  blockedAt?: string | null;
+  blockedReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  signupTime?: string;
+  lastLoginTime?: string;
+  statistics: UserStatistics;
+  withdrawalRequests: UserWithdrawalRequest[];
+  appSubmissions?: AppSubmission[];
+}
+
+export interface UserDetailsResponse {
+  message: string;
+  data: UserDetails;
+}
+
+// Get User Details by ID API
+export const getUserById = async (userId: string): Promise<UserDetailsResponse> => {
+  const response = await fetch(`${BASE_URL}/users/${userId}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Update User Interfaces
+export interface UpdateUserRequest {
+  MobileNumber?: string;
+  Password?: string;
+  DeviceId?: string;
+  Coins?: number;
+  WalletBalance?: number;
+}
+
+export interface UserUpdateChanges {
+  mobileNumber?: { from: string; to: string };
+  deviceId?: { from: string; to: string };
+  coins?: { from: number; to: number };
+  walletBalance?: { from: number; to: number };
+  password?: string;
+}
+
+export interface UpdateUserResponse {
+  message: string;
+  data: {
+    userId: string;
+    mobileNumber: string;
+    password?: string;
+    deviceId: string;
+    referCode: string;
+    coins: number;
+    walletBalance: number;
+    referredBy: string | null;
+    createdAt: string;
+    updatedAt: string;
+    changes: UserUpdateChanges;
+    statistics: {
+      referralCount: number;
+      totalWithdrawalRequests: number;
+    };
+  };
+}
+
+// Update User API
+export const updateUser = async (userId: string, data: UpdateUserRequest): Promise<UpdateUserResponse> => {
+  const response = await fetch(`${BASE_URL}/users/${userId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Block User Interfaces
+export interface BlockUserRequest {
+  reason?: string;
+}
+
+export interface BlockUserResponse {
+  message: string;
+  data: {
+    userId: string;
+    mobileNumber: string;
+    isBlocked: boolean;
+    blockedAt: string;
+    blockedReason?: string | null;
+  };
+}
+
+export interface UnblockUserResponse {
+  message: string;
+  data: {
+    userId: string;
+    mobileNumber: string;
+    isBlocked: boolean;
+    blockedAt: null;
+    blockedReason: null;
+  };
+}
+
+// Block User API
+export const blockUser = async (userId: string, data?: BlockUserRequest): Promise<BlockUserResponse> => {
+  const response = await fetch(`${BASE_URL}/users/${userId}/block`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: data ? JSON.stringify(data) : undefined,
+  });
+
+  return handleApiResponse(response);
+};
+
+// Unblock User API
+export const unblockUser = async (userId: string): Promise<UnblockUserResponse> => {
+  const response = await fetch(`${BASE_URL}/users/${userId}/unblock`, {
+    method: 'POST',
     headers: getAuthHeaders(),
   });
 
@@ -529,7 +721,7 @@ export const getApps = async (params?: GetAppsParams): Promise<AppsResponse> => 
   if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
 
   const url = `${BASE_URL}/apps${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  
+
   const response = await fetch(url, {
     method: 'GET',
     headers: getAuthHeaders(),
@@ -578,7 +770,7 @@ export const getAppSubmissions = async (params?: GetSubmissionsParams): Promise<
   if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
 
   const url = `${BASE_URL}/apps/submissions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  
+
   const response = await fetch(url, {
     method: 'GET',
     headers: getAuthHeaders(),

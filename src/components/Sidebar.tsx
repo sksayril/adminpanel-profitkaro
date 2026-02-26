@@ -10,6 +10,7 @@ import {
   Coins,
   Ticket,
   Wallet,
+  RotateCcw,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,6 +32,7 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
     { icon: Ticket, label: 'Scratch Card Settings', path: '/scratch-card-settings' },
     { icon: Coins, label: 'Coin Conversion', path: '/coin-conversion' },
     { icon: Wallet, label: 'Withdrawal Settings', path: '/withdrawal-settings' },
+    { icon: RotateCcw, label: 'Spin Wheel Setup', path: '/spin-wheel-settings' },
   ];
 
   const handleNavigation = (path: string) => {
@@ -39,9 +41,8 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
 
   return (
     <div
-      className={`h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 flex flex-col py-6 fixed left-0 top-0 transition-all duration-300 ease-in-out z-20 shadow-2xl ${
-        isExpanded ? 'w-64' : 'w-20'
-      }`}
+      className={`h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 flex flex-col py-6 fixed left-0 top-0 transition-all duration-300 ease-in-out z-20 shadow-2xl ${isExpanded ? 'w-64' : 'w-20'
+        }`}
     >
       <div className={`mb-8 ${isExpanded ? 'px-6' : 'px-4'} flex items-center ${isExpanded ? 'justify-start' : 'justify-center'}`}>
         <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30">
@@ -64,13 +65,11 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
             <button
               key={index}
               onClick={() => handleNavigation(item.path)}
-              className={`rounded-xl flex items-center transition-all duration-200 ${
-                isExpanded ? 'w-full px-4 py-3 justify-start' : 'w-12 h-12 justify-center'
-              } ${
-                isActive
+              className={`rounded-xl flex items-center transition-all duration-200 ${isExpanded ? 'w-full px-4 py-3 justify-start' : 'w-12 h-12 justify-center'
+                } ${isActive
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
+                }`}
               title={!isExpanded ? item.label : undefined}
             >
               <item.icon size={22} className="flex-shrink-0" />
