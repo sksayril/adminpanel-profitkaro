@@ -11,6 +11,8 @@ import {
   Ticket,
   Wallet,
   RotateCcw,
+  Gift,
+  Clock,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -30,6 +32,8 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
     { icon: UserCheck, label: 'Referral Settings', path: '/referral-settings' },
     { icon: Calendar, label: 'Daily Bonus Settings', path: '/daily-bonus-settings' },
     { icon: Ticket, label: 'Scratch Card Settings', path: '/scratch-card-settings' },
+    { icon: Clock, label: 'New Scratch Card Settings', path: '/scratch-card-daily-limit-settings' },
+    { icon: Gift, label: 'Signup Bonus', path: '/signup-bonus-settings' },
     { icon: Coins, label: 'Coin Conversion', path: '/coin-conversion' },
     { icon: Wallet, label: 'Withdrawal Settings', path: '/withdrawal-settings' },
     { icon: RotateCcw, label: 'Spin Wheel Setup', path: '/spin-wheel-settings' },

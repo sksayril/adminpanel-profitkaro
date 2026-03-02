@@ -881,6 +881,86 @@ export const getScratchCardSettings = async (): Promise<ScratchCardSettingsRespo
   return handleApiResponse(response);
 };
 
+// Signup Bonus Settings Interfaces
+export interface SignupBonusSettingsRequest {
+  SignupBonusAmount: number;
+  RewardType: 'Coins' | 'WalletBalance';
+}
+
+export interface SignupBonusSettingsResponse {
+  message: string;
+  data: {
+    _id: string;
+    SignupBonusAmount: number;
+    RewardType: 'Coins' | 'WalletBalance';
+    createdAt?: string;
+    updatedAt?: string;
+  };
+}
+
+// Set Signup Bonus Settings API
+export const setSignupBonusSettings = async (data: SignupBonusSettingsRequest): Promise<SignupBonusSettingsResponse> => {
+  const response = await fetch(`${BASE_URL}/signupbonus/settings`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Get Signup Bonus Settings API
+export const getSignupBonusSettings = async (): Promise<SignupBonusSettingsResponse> => {
+  const response = await fetch(`${BASE_URL}/signupbonus/settings`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Scratch Card Daily Limit Settings Interfaces
+export interface ScratchCardDailyLimitSettingsRequest {
+  DailyLimit?: number;
+  RewardAmount?: number;
+  RewardCoins?: number;
+  IsActive?: boolean;
+}
+
+export interface ScratchCardDailyLimitSettingsResponse {
+  message: string;
+  data: {
+    _id: string;
+    DailyLimit: number;
+    RewardAmount: number;
+    RewardCoins: number;
+    IsActive: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+}
+
+// Set Scratch Card Daily Limit Settings API
+export const setScratchCardDailyLimitSettings = async (data: ScratchCardDailyLimitSettingsRequest): Promise<ScratchCardDailyLimitSettingsResponse> => {
+  const response = await fetch(`${BASE_URL}/scratchcard/dailylimit/settings`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Get Scratch Card Daily Limit Settings API
+export const getScratchCardDailyLimitSettings = async (): Promise<ScratchCardDailyLimitSettingsResponse> => {
+  const response = await fetch(`${BASE_URL}/scratchcard/dailylimit/settings`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
 // Withdrawal Threshold Settings Interfaces
 export interface WithdrawalThresholdRequest {
   MinimumWithdrawalAmount: number;

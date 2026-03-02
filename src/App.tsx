@@ -9,6 +9,8 @@ import CaptchaSettings from './pages/CaptchaSettings';
 import ReferralSettings from './pages/ReferralSettings';
 import DailyBonusSettings from './pages/DailyBonusSettings';
 import ScratchCardSettings from './pages/ScratchCardSettings';
+import ScratchCardDailyLimitSettings from './pages/ScratchCardDailyLimitSettings';
+import SignupBonusSettings from './pages/SignupBonusSettings';
 import WithdrawalRequests from './pages/WithdrawalRequests';
 import Users from './pages/Users';
 import AppsInstall from './pages/AppsInstall';
@@ -75,6 +77,22 @@ function App() {
         element={
           <ProtectedRoute>
             <ScratchCardSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scratch-card-daily-limit-settings"
+        element={
+          <ProtectedRoute>
+            <ScratchCardDailyLimitSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/signup-bonus-settings"
+        element={
+          <ProtectedRoute>
+            <SignupBonusSettings />
           </ProtectedRoute>
         }
       />
