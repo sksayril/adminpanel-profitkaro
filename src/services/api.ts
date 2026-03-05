@@ -1037,3 +1037,402 @@ export const getDashboardStatistics = async (days: number = 30): Promise<Dashboa
 
   return handleApiResponse(response);
 };
+
+// Commission Slab Interfaces
+export interface CommissionSlab {
+  _id: string;
+  SlabName: string;
+  MinEarnings: number;
+  MaxEarnings: number | null;
+  CommissionPercentage: number;
+  RewardType: 'Coins' | 'WalletBalance';
+  IsActive: boolean;
+  Order: number;
+  CommissionBasedOn: 'ReferredUserWalletBalance' | 'WithdrawalRequestAmount' | 'WithdrawalRequestTime';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateCommissionSlabRequest {
+  SlabName: string;
+  MinEarnings: number;
+  MaxEarnings?: number | null;
+  CommissionPercentage: number;
+  RewardType?: 'Coins' | 'WalletBalance';
+  IsActive?: boolean;
+  Order?: number;
+  CommissionBasedOn?: 'ReferredUserWalletBalance' | 'WithdrawalRequestAmount' | 'WithdrawalRequestTime';
+}
+
+export interface UpdateCommissionSlabRequest {
+  SlabName?: string;
+  MinEarnings?: number;
+  MaxEarnings?: number | null;
+  CommissionPercentage?: number;
+  RewardType?: 'Coins' | 'WalletBalance';
+  IsActive?: boolean;
+  Order?: number;
+  CommissionBasedOn?: 'ReferredUserWalletBalance' | 'WithdrawalRequestAmount' | 'WithdrawalRequestTime';
+}
+
+export interface CommissionSlabsResponse {
+  message: string;
+  data: {
+    slabs: CommissionSlab[];
+    totalSlabs: number;
+    activeSlabs: number;
+  };
+}
+
+export interface CommissionSlabResponse {
+  message: string;
+  data: CommissionSlab;
+}
+
+// Create Commission Slab API
+export const createCommissionSlab = async (data: CreateCommissionSlabRequest): Promise<CommissionSlabResponse> => {
+  const response = await fetch(`${BASE_URL}/commission/slabs`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Get Commission Slabs API
+export const getCommissionSlabs = async (): Promise<CommissionSlabsResponse> => {
+  const response = await fetch(`${BASE_URL}/commission/slabs`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Update Commission Slab API
+export const updateCommissionSlab = async (
+  slabId: string,
+  data: UpdateCommissionSlabRequest
+): Promise<CommissionSlabResponse> => {
+  const response = await fetch(`${BASE_URL}/commission/slabs/${slabId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Delete Commission Slab API
+export const deleteCommissionSlab = async (slabId: string): Promise<{ message: string }> => {
+  const response = await fetch(`${BASE_URL}/commission/slabs/${slabId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Users Earnings Interfaces
+export interface UserEarning {
+  userId: string;
+  userName?: string;
+  mobileNumber: string;
+  referCode: string;
+  coins: number;
+  walletBalance: number;
+  totalEarnings: number;
+  earningsBreakdown: {
+    coins: number;
+    walletBalance: number;
+    appInstallations: number;
+    scratchCards: number;
+    captcha: number;
+    dailyBonus: number;
+    referralEarnings: number;
+  };
+  referralCount: number;
+  referredBy: string | null;
+  signupTime?: string;
+  lastLoginTime?: string;
+  isBlocked: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UsersEarningsResponse {
+  message: string;
+  data: {
+    users: UserEarning[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalUsers: number;
+      limit: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+    statistics: {
+      totalCoins: number;
+      totalWalletBalance: number;
+      totalEarnings: number;
+      totalReferrals: number;
+    };
+  };
+}
+
+export interface GetUsersEarningsParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: 'totalEarnings' | 'coins' | 'walletBalance' | 'referralCount';
+}
+
+// Get Users Earnings API
+export const getUsersEarnings = async (params?: GetUsersEarningsParams): Promise<UsersEarningsResponse> => {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append('page', params.page.toString());
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.search) queryParams.append('search', params.search);
+  if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+
+  const url = `${BASE_URL}/users/earnings${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Sponsor Promotion Interfaces
+export interface SponsorPromotionSubmission {
+  submissionId: string;
+  userId: string;
+  userName: string;
+  userMobileNumber: string;
+  userReferCode: string;
+  sponsorName: string;
+  mobileNumber: string;
+  email: string;
+  appPromotion: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  adminNotes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SponsorPromotionsResponse {
+  message: string;
+  data: {
+    submissions: SponsorPromotionSubmission[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalSubmissions: number;
+      limit: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+    statistics: {
+      total: number;
+      pending: number;
+      approved: number;
+      rejected: number;
+    };
+  };
+}
+
+export interface UpdateSponsorPromotionStatusRequest {
+  status: 'Approved' | 'Rejected';
+  adminNotes?: string;
+}
+
+export interface UpdateSponsorPromotionStatusResponse {
+  message: string;
+  data: {
+    submissionId: string;
+    sponsorName: string;
+    mobileNumber: string;
+    email: string;
+    appPromotion: string;
+    status: string;
+    adminNotes?: string | null;
+    userName: string;
+    userMobileNumber: string;
+    updatedAt: string;
+  };
+}
+
+export interface GetSponsorPromotionsParams {
+  status?: 'Pending' | 'Approved' | 'Rejected';
+  userId?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+// Get Sponsor Promotions API
+export const getSponsorPromotions = async (params?: GetSponsorPromotionsParams): Promise<SponsorPromotionsResponse> => {
+  const queryParams = new URLSearchParams();
+  if (params?.status) queryParams.append('status', params.status);
+  if (params?.userId) queryParams.append('userId', params.userId);
+  if (params?.page) queryParams.append('page', params.page.toString());
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.search) queryParams.append('search', params.search);
+
+  const url = `${BASE_URL}/sponsor/promotions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Update Sponsor Promotion Status API
+export const updateSponsorPromotionStatus = async (
+  submissionId: string,
+  data: UpdateSponsorPromotionStatusRequest
+): Promise<UpdateSponsorPromotionStatusResponse> => {
+  const response = await fetch(`${BASE_URL}/sponsor/promotions/${submissionId}/status`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Cron Jobs Interfaces
+export interface CronJob {
+  scheduled: boolean;
+  schedule: string;
+  description: string;
+}
+
+export interface CronJobsStatusResponse {
+  message: string;
+  data: {
+    dailyResetJob: CronJob;
+    cleanupOldRecordsJob: CronJob;
+    note: string;
+  };
+}
+
+export interface DailyResetStatistics {
+  scratchCard: {
+    today: number;
+    yesterday: number;
+  };
+  dailySpin: {
+    today: number;
+    yesterday: number;
+  };
+  captcha: {
+    today: number;
+    yesterday: number;
+  };
+}
+
+export interface DailyResetStatusResponse {
+  message: string;
+  data: {
+    resetTime: string;
+    today: string;
+    yesterday: string;
+    statistics: DailyResetStatistics;
+    note: string;
+  };
+}
+
+// Get Cron Jobs Status API
+export const getCronJobsStatus = async (): Promise<CronJobsStatusResponse> => {
+  const response = await fetch(`${BASE_URL}/cron/status`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Get Daily Reset Status API
+export const getDailyResetStatus = async (): Promise<DailyResetStatusResponse> => {
+  const response = await fetch(`${BASE_URL}/cron/daily-reset`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Support Link Interfaces
+export interface SupportLinkSettings {
+  _id?: string;
+  SupportLink: string;
+  SupportEmail?: string | null;
+  SupportPhone?: string | null;
+  SupportWhatsApp?: string | null;
+  IsActive: boolean;
+  Description?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateSupportLinkRequest {
+  SupportLink: string;
+  SupportEmail?: string | null;
+  SupportPhone?: string | null;
+  SupportWhatsApp?: string | null;
+  IsActive?: boolean;
+  Description?: string | null;
+}
+
+export interface UpdateSupportLinkRequest {
+  SupportLink?: string;
+  SupportEmail?: string | null;
+  SupportPhone?: string | null;
+  SupportWhatsApp?: string | null;
+  IsActive?: boolean;
+  Description?: string | null;
+}
+
+export interface SupportLinkResponse {
+  message: string;
+  data: SupportLinkSettings;
+}
+
+// Create/Set Support Link API
+export const setSupportLink = async (data: CreateSupportLinkRequest): Promise<SupportLinkResponse> => {
+  const response = await fetch(`${BASE_URL}/support/link`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Get Support Link API
+export const getSupportLink = async (): Promise<SupportLinkResponse> => {
+  const response = await fetch(`${BASE_URL}/support/link`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Update Support Link API
+export const updateSupportLink = async (data: UpdateSupportLinkRequest): Promise<SupportLinkResponse> => {
+  const response = await fetch(`${BASE_URL}/support/link`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};

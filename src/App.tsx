@@ -17,6 +17,9 @@ import AppsInstall from './pages/AppsInstall';
 import CoinConversionSettings from './pages/CoinConversionSettings';
 import WithdrawalSettings from './pages/WithdrawalSettings';
 import SpinWheelSettings from './pages/SpinWheelSettings';
+import CommissionSlabSettings from './pages/CommissionSlabSettings';
+import SponsorPromotions from './pages/SponsorPromotions';
+import SupportSettings from './pages/SupportSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -141,6 +144,30 @@ function App() {
         element={
           <ProtectedRoute>
             <SpinWheelSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/commission-slab-settings"
+        element={
+          <ProtectedRoute>
+            <CommissionSlabSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sponsor-promotions"
+        element={
+          <ProtectedRoute>
+            <SponsorPromotions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/support-settings"
+        element={
+          <ProtectedRoute>
+            <SupportSettings />
           </ProtectedRoute>
         }
       />

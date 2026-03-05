@@ -13,6 +13,9 @@ import {
   RotateCcw,
   Gift,
   Clock,
+  Layers,
+  Megaphone,
+  Headphones,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,8 +31,11 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
     { icon: CreditCard, label: 'Payments', path: '/payments' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: Smartphone, label: 'Apps Install', path: '/apps-install' },
+    { icon: Megaphone, label: 'Sponsor', path: '/sponsor-promotions' },
+    { icon: Headphones, label: 'Support', path: '/support-settings' },
     { icon: Shield, label: 'Captcha Settings', path: '/captcha-settings' },
     { icon: UserCheck, label: 'Referral Settings', path: '/referral-settings' },
+    { icon: Layers, label: 'Commission Slab', path: '/commission-slab-settings' },
     { icon: Calendar, label: 'Daily Bonus Settings', path: '/daily-bonus-settings' },
     { icon: Ticket, label: 'Scratch Card Settings', path: '/scratch-card-settings' },
     { icon: Clock, label: 'New Scratch Card Settings', path: '/scratch-card-daily-limit-settings' },
@@ -62,14 +68,14 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col gap-2 px-4">
+      <div className="flex-1 flex flex-col gap-2 px-4 overflow-y-auto overflow-x-hidden pb-4 sidebar-scroll" style={{ scrollbarWidth: 'thin', scrollbarColor: '#475569 #1e293b' }}>
         {menuItems.map((item, index) => {
           const isActive = location.pathname === item.path;
           return (
             <button
               key={index}
               onClick={() => handleNavigation(item.path)}
-              className={`rounded-xl flex items-center transition-all duration-200 ${isExpanded ? 'w-full px-4 py-3 justify-start' : 'w-12 h-12 justify-center'
+              className={`rounded-xl flex items-center transition-all duration-200 flex-shrink-0 ${isExpanded ? 'w-full px-4 py-3 justify-start' : 'w-12 h-12 justify-center'
                 } ${isActive
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
