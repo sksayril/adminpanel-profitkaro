@@ -248,6 +248,51 @@ const Dashboard = () => {
               </div>
             </div>
 
+            {/* Requested Summary (New API Fields) */}
+            {dashboardData.requestedSummary && (
+              <div className="mb-8">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Requested Summary</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                    <p className="text-xs text-gray-500">Users Today</p>
+                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.today)}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                    <p className="text-xs text-gray-500">Users Yesterday</p>
+                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.yesterday)}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                    <p className="text-xs text-gray-500">Users 7 Days</p>
+                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.sevenDays)}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                    <p className="text-xs text-gray-500">Users This Month</p>
+                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.thisMonth)}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                    <p className="text-xs text-gray-500">Users Last Month</p>
+                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.lastMonth)}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                    <p className="text-xs text-gray-500">Users Total</p>
+                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.total)}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                    <p className="text-xs text-gray-500">Withdrawals Today</p>
+                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.withdrawals.today)}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
+                    <p className="text-xs text-gray-500">Withdrawals Yesterday</p>
+                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.withdrawals.yesterday)}</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-gray-200 md:col-span-3 lg:col-span-1">
+                    <p className="text-xs text-gray-500">Withdrawals This Month</p>
+                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.withdrawals.thisMonth)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Cron Jobs Management Section */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">

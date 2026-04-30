@@ -2,7 +2,13 @@ import { useState, useEffect } from 'react';
 import { DollarSign, CheckCircle2, XCircle, Clock, Filter, Search, AlertCircle, Eye, X } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { getWithdrawalRequests, updateWithdrawalStatus, WithdrawalRequest, UpdateWithdrawalStatusRequest } from '../services/api';
+import {
+  getWithdrawalRequests,
+  updateWithdrawalStatus,
+  bulkUpdateWithdrawalStatus,
+  WithdrawalRequest,
+  UpdateWithdrawalStatusRequest,
+} from '../services/api';
 
 const WithdrawalRequests = () => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -17,6 +23,7 @@ const WithdrawalRequests = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
+  const [selectedRequestIds, setSelectedRequestIds] = useState<string[]>([]);
 
   const [requests, setRequests] = useState<WithdrawalRequest[]>([]);
   const [stats, setStats] = useState({
@@ -41,6 +48,7 @@ const WithdrawalRequests = () => {
       const filter = statusFilter === 'All' ? undefined : statusFilter;
       const response = await getWithdrawalRequests(filter);
       setRequests(response.data.requests);
+      setSelectedRequestIds([]);
       setStats({
         totalRequests: response.data.totalRequests,
         pendingCount: response.data.pendingCount,
@@ -51,6 +59,45 @@ const WithdrawalRequests = () => {
       setError(err instanceof Error ? err.message : 'Failed to load withdrawal requests');
     } finally {
       setFetching(false);
+    }
+  };
+
+  const toggleRequestSelection = (requestId: string) => {
+    setSelectedRequestIds((prev) =>
+      prev.includes(requestId) ? prev.filter((id) => id !== requestId) : [...prev, requestId]
+    );
+  };
+
+  const toggleSelectAllVisible = () => {
+    const visibleIds = filteredRequests.map((request) => request.requestId);
+    const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedRequestIds.includes(id));
+    setSelectedRequestIds(allSelected ? [] : visibleIds);
+  };
+
+  const handleBulkStatusUpdate = async (status: 'Approved' | 'Rejected') => {
+    if (selectedRequestIds.length === 0) {
+      setError('Please select at least one withdrawal request');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      await bulkUpdateWithdrawalStatus({
+        requestIds: selectedRequestIds,
+        status,
+        adminNotes: adminNotes || undefined,
+      });
+      setSuccess(`Selected requests ${status.toLowerCase()} successfully`);
+      setSelectedRequestIds([]);
+      setAdminNotes('');
+      fetchRequests();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to bulk update requests');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -236,6 +283,34 @@ const WithdrawalRequests = () => {
             </div>
           </div>
 
+          {/* Bulk Actions */}
+          <div className="bg-white rounded-xl p-4 shadow-md border border-gray-200 mb-6 flex flex-col md:flex-row md:items-center gap-3">
+            <p className="text-sm text-gray-600">
+              Selected: <span className="font-semibold">{selectedRequestIds.length}</span>
+            </p>
+            <input
+              type="text"
+              placeholder="Bulk action notes (optional)"
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={() => handleBulkStatusUpdate('Approved')}
+              disabled={loading || selectedRequestIds.length === 0}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+            >
+              Bulk Approve
+            </button>
+            <button
+              onClick={() => handleBulkStatusUpdate('Rejected')}
+              disabled={loading || selectedRequestIds.length === 0}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+            >
+              Bulk Reject
+            </button>
+          </div>
+
           {/* Requests Table */}
           <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             {fetching ? (
@@ -253,6 +328,16 @@ const WithdrawalRequests = () => {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          checked={
+                            filteredRequests.length > 0 &&
+                            filteredRequests.every((request) => selectedRequestIds.includes(request.requestId))
+                          }
+                          onChange={toggleSelectAllVisible}
+                        />
+                      </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Request ID
                       </th>
@@ -279,6 +364,13 @@ const WithdrawalRequests = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredRequests.map((request) => (
                       <tr key={request.requestId} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedRequestIds.includes(request.requestId)}
+                            onChange={() => toggleRequestSelection(request.requestId)}
+                          />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-mono text-gray-900">
                             {request.requestId.substring(0, 12)}...

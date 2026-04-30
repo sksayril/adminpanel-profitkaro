@@ -33,6 +33,7 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
     { icon: Smartphone, label: 'Apps Install', path: '/apps-install' },
     { icon: Megaphone, label: 'Sponsor', path: '/sponsor-promotions' },
     { icon: Headphones, label: 'Support', path: '/support-settings' },
+    { icon: Megaphone, label: 'Ads Settings', path: '/ads-settings' },
     { icon: Shield, label: 'Captcha Settings', path: '/captcha-settings' },
     { icon: UserCheck, label: 'Referral Settings', path: '/referral-settings' },
     { icon: Layers, label: 'Commission Slab', path: '/commission-slab-settings' },

@@ -10,6 +10,8 @@ import {
   getAppById,
   getAppSubmissions,
   updateSubmissionStatus,
+  bulkUpdateSubmissionStatus,
+  deleteAppSubmission,
   App,
   AppSubmission,
   CreateAppRequest,
@@ -54,6 +56,7 @@ const AppsInstall = () => {
   const [showActionModal, setShowActionModal] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
+  const [selectedSubmissionIds, setSelectedSubmissionIds] = useState<string[]>([]);
 
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
@@ -97,6 +100,7 @@ const AppsInstall = () => {
 
       const response = await getAppSubmissions(params);
       setSubmissions(response.data.submissions);
+      setSelectedSubmissionIds([]);
       setSubmissionStats({
         totalSubmissions: response.data.totalSubmissions,
         pendingCount: response.data.pendingCount,
@@ -105,6 +109,70 @@ const AppsInstall = () => {
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load submissions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSubmissionSelection = (submissionId: string) => {
+    setSelectedSubmissionIds((prev) =>
+      prev.includes(submissionId) ? prev.filter((id) => id !== submissionId) : [...prev, submissionId]
+    );
+  };
+
+  const toggleSelectAllVisible = () => {
+    const visibleIds = submissions.map((submission) => submission.submissionId);
+    const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedSubmissionIds.includes(id));
+    setSelectedSubmissionIds(allSelected ? [] : visibleIds);
+  };
+
+  const handleBulkSubmissionAction = async (status: 'Approved' | 'Rejected') => {
+    if (selectedSubmissionIds.length === 0) {
+      setError('Please select at least one submission');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      await bulkUpdateSubmissionStatus({
+        submissionIds: selectedSubmissionIds,
+        status,
+        adminNotes: adminNotes || undefined,
+      });
+      setSuccess(`Selected submissions ${status.toLowerCase()} successfully`);
+      setAdminNotes('');
+      setSelectedSubmissionIds([]);
+      fetchSubmissions();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update submissions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSubmission = async (submission: AppSubmission) => {
+    const isApproved = submission.status === 'Approved';
+    const proceed = confirm(
+      isApproved
+        ? 'This submission is approved. Delete it with reward revert?'
+        : 'Are you sure you want to delete this submission?'
+    );
+    if (!proceed) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      await deleteAppSubmission(submission.submissionId, {
+        allowApprovedDelete: isApproved ? true : undefined,
+        revertReward: isApproved ? true : undefined,
+      });
+      setSuccess('Submission deleted successfully');
+      fetchSubmissions();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete submission');
     } finally {
       setLoading(false);
     }
@@ -389,6 +457,34 @@ const AppsInstall = () => {
                 </div>
               </div>
 
+              {/* Bulk Actions */}
+              <div className="bg-white rounded-xl p-4 shadow-md border border-gray-200 mb-6 flex flex-col md:flex-row md:items-center gap-3">
+                <p className="text-sm text-gray-600">
+                  Selected: <span className="font-semibold">{selectedSubmissionIds.length}</span>
+                </p>
+                <input
+                  type="text"
+                  placeholder="Bulk action notes (optional)"
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <button
+                  onClick={() => handleBulkSubmissionAction('Approved')}
+                  disabled={loading || selectedSubmissionIds.length === 0}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                >
+                  Bulk Approve
+                </button>
+                <button
+                  onClick={() => handleBulkSubmissionAction('Rejected')}
+                  disabled={loading || selectedSubmissionIds.length === 0}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+                >
+                  Bulk Reject
+                </button>
+              </div>
+
               {/* Apps Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
@@ -568,6 +664,16 @@ const AppsInstall = () => {
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
+                            <input
+                              type="checkbox"
+                              checked={
+                                submissions.length > 0 &&
+                                submissions.every((submission) => selectedSubmissionIds.includes(submission.submissionId))
+                              }
+                              onChange={toggleSelectAllVisible}
+                            />
+                          </th>
                           <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">App</th>
                           <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">User</th>
                           <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Reward</th>
@@ -579,6 +685,13 @@ const AppsInstall = () => {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {submissions.map((submission) => (
                           <tr key={submission.submissionId} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <input
+                                type="checkbox"
+                                checked={selectedSubmissionIds.includes(submission.submissionId)}
+                                onChange={() => toggleSubmissionSelection(submission.submissionId)}
+                              />
+                            </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <img
@@ -640,6 +753,13 @@ const AppsInstall = () => {
                                     </button>
                                   </>
                                 )}
+                                <button
+                                  onClick={() => handleDeleteSubmission(submission)}
+                                  className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                                  title="Delete Submission"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
                               </div>
                             </td>
                           </tr>

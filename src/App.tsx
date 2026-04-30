@@ -20,6 +20,7 @@ import SpinWheelSettings from './pages/SpinWheelSettings';
 import CommissionSlabSettings from './pages/CommissionSlabSettings';
 import SponsorPromotions from './pages/SponsorPromotions';
 import SupportSettings from './pages/SupportSettings';
+import AdsSettings from './pages/AdsSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -168,6 +169,14 @@ function App() {
         element={
           <ProtectedRoute>
             <SupportSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ads-settings"
+        element={
+          <ProtectedRoute>
+            <AdsSettings />
           </ProtectedRoute>
         }
       />

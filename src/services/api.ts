@@ -793,6 +793,195 @@ export const updateSubmissionStatus = async (
   return handleApiResponse(response);
 };
 
+export interface BulkSubmissionStatusRequest {
+  submissionIds: string[];
+  status: 'Approved' | 'Rejected';
+  adminNotes?: string;
+}
+
+export interface BulkWithdrawalStatusRequest {
+  requestIds: string[];
+  status: 'Approved' | 'Rejected';
+  adminNotes?: string;
+}
+
+export interface BulkActionResponse {
+  message: string;
+  data?: {
+    matchedCount?: number;
+    modifiedCount?: number;
+    processedCount?: number;
+    failedCount?: number;
+    [key: string]: any;
+  };
+}
+
+export interface DeleteAppSubmissionParams {
+  allowApprovedDelete?: boolean;
+  revertReward?: boolean;
+}
+
+export interface UserActivityEvent {
+  _id?: string;
+  type: string;
+  coinsDelta?: number;
+  walletDelta?: number;
+  amount?: number;
+  status?: string;
+  note?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface UserActivitySummary {
+  totalEvents: number;
+  totalCoinsDelta: number;
+  totalWalletDelta: number;
+}
+
+export interface UserActivityUser {
+  _id: string;
+  UserName?: string;
+  MobileNumber?: string;
+  ReferCode?: string;
+  Coins?: number;
+  WalletBalance?: number;
+}
+
+export interface UserActivityResponse {
+  message: string;
+  data: {
+    user: UserActivityUser;
+    events: UserActivityEvent[];
+    summary: UserActivitySummary;
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalEvents: number;
+      limit: number;
+    };
+  };
+}
+
+export interface GetUserActivityParams {
+  page?: number;
+  limit?: number;
+  type?: string;
+}
+
+export interface TaskControl {
+  _id?: string;
+  taskType: 'Captcha' | 'DailySpin' | 'ScratchCardDailyLimit' | 'AppInstall';
+  IsActive?: boolean;
+  AdsEnabled?: boolean;
+  DailyLimit?: number;
+  CoinsPerTask?: number;
+  [key: string]: any;
+}
+
+export interface TaskControlsResponse {
+  message: string;
+  data: {
+    controls: TaskControl[];
+  };
+}
+
+export interface UpdateTaskControlRequest {
+  IsActive?: boolean;
+  AdsEnabled?: boolean;
+  DailyLimit?: number;
+  CoinsPerTask?: number;
+}
+
+export interface TaskControlResponse {
+  message: string;
+  data: TaskControl;
+}
+
+// Get User Activity API
+export const getUserActivity = async (userId: string, params?: GetUserActivityParams): Promise<UserActivityResponse> => {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append('page', params.page.toString());
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.type) queryParams.append('type', params.type);
+
+  const url = `${BASE_URL}/users/${userId}/activity${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Get Task Controls API
+export const getTaskControls = async (): Promise<TaskControlsResponse> => {
+  const response = await fetch(`${BASE_URL}/task-controls`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Update Task Control API
+export const updateTaskControl = async (
+  taskType: 'Captcha' | 'DailySpin' | 'ScratchCardDailyLimit' | 'AppInstall',
+  data: UpdateTaskControlRequest
+): Promise<TaskControlResponse> => {
+  const response = await fetch(`${BASE_URL}/task-controls/${taskType}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Bulk Update App Submission Status API
+export const bulkUpdateSubmissionStatus = async (data: BulkSubmissionStatusRequest): Promise<BulkActionResponse> => {
+  const response = await fetch(`${BASE_URL}/apps/submissions/bulk-status`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Bulk Update Withdrawal Request Status API
+export const bulkUpdateWithdrawalStatus = async (data: BulkWithdrawalStatusRequest): Promise<BulkActionResponse> => {
+  const response = await fetch(`${BASE_URL}/withdrawal/requests/bulk-status`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Delete App Submission API
+export const deleteAppSubmission = async (
+  submissionId: string,
+  params?: DeleteAppSubmissionParams
+): Promise<{ message: string }> => {
+  const queryParams = new URLSearchParams();
+  if (typeof params?.allowApprovedDelete === 'boolean') {
+    queryParams.append('allowApprovedDelete', params.allowApprovedDelete ? 'true' : 'false');
+  }
+  if (typeof params?.revertReward === 'boolean') {
+    queryParams.append('revertReward', params.revertReward ? 'true' : 'false');
+  }
+
+  const url = `${BASE_URL}/apps/submissions/${submissionId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
 // Coin Conversion Settings Interfaces
 export interface CoinConversionSettingsRequest {
   CoinsPerRupee: number;
@@ -1020,6 +1209,21 @@ export interface DashboardStatistics {
       date: string;
       registrations: number;
     }>;
+  };
+  requestedSummary?: {
+    users: {
+      today: number;
+      yesterday: number;
+      sevenDays: number;
+      thisMonth: number;
+      lastMonth: number;
+      total: number;
+    };
+    withdrawals: {
+      today: number;
+      yesterday: number;
+      thisMonth: number;
+    };
   };
 }
 
@@ -1430,6 +1634,84 @@ export const getSupportLink = async (): Promise<SupportLinkResponse> => {
 export const updateSupportLink = async (data: UpdateSupportLinkRequest): Promise<SupportLinkResponse> => {
   const response = await fetch(`${BASE_URL}/support/link`, {
     method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Ads Settings Interfaces
+export type AdsTaskType = 'Quiz' | 'Captcha' | 'DailySpin' | 'ScratchCard' | 'ScratchCardDailyLimit' | 'AppInstall';
+
+export interface AdsTaskRule {
+  TaskType: AdsTaskType;
+  IsActive?: boolean;
+  BannerEnabled?: boolean;
+  RewardedEnabled?: boolean;
+  InterstitialEnabled?: boolean;
+  InterstitialAfterCount?: number;
+  RewardedAfterCount?: number;
+}
+
+export interface AdsSettings {
+  GlobalAdsEnabled: boolean;
+  BannerAdsEnabled: boolean;
+  RewardedAdsEnabled: boolean;
+  InterstitialAdsEnabled: boolean;
+  TaskRules: AdsTaskRule[];
+}
+
+export interface AdsSettingsResponse {
+  message: string;
+  data: AdsSettings;
+}
+
+export interface UpdateAdsSettingsRequest {
+  GlobalAdsEnabled?: boolean;
+  BannerAdsEnabled?: boolean;
+  RewardedAdsEnabled?: boolean;
+  InterstitialAdsEnabled?: boolean;
+  TaskRules?: AdsTaskRule[];
+}
+
+export interface UpdateTaskAdsSettingsRequest {
+  IsActive?: boolean;
+  BannerEnabled?: boolean;
+  RewardedEnabled?: boolean;
+  InterstitialEnabled?: boolean;
+  InterstitialAfterCount?: number;
+  RewardedAfterCount?: number;
+}
+
+// Get Ads Settings API
+export const getAdsSettings = async (): Promise<AdsSettingsResponse> => {
+  const response = await fetch(`${BASE_URL}/ads/settings`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Update Full Ads Settings API
+export const updateAdsSettings = async (data: UpdateAdsSettingsRequest): Promise<AdsSettingsResponse> => {
+  const response = await fetch(`${BASE_URL}/ads/settings`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Update Task-wise Ads Settings API
+export const updateTaskAdsSettings = async (
+  taskType: AdsTaskType,
+  data: UpdateTaskAdsSettingsRequest
+): Promise<AdsSettingsResponse> => {
+  const response = await fetch(`${BASE_URL}/ads/settings/task/${taskType}`, {
+    method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
