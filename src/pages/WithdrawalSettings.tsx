@@ -13,6 +13,7 @@ const WithdrawalSettings = () => {
 
   const [formData, setFormData] = useState<WithdrawalThresholdRequest>({
     MinimumWithdrawalAmount: 100,
+    DailyWithdrawalRequestLimit: 1,
   });
 
   const toggleSidebar = () => {
@@ -32,6 +33,7 @@ const WithdrawalSettings = () => {
       if (response.data) {
         setFormData({
           MinimumWithdrawalAmount: response.data.MinimumWithdrawalAmount,
+          DailyWithdrawalRequestLimit: response.data.DailyWithdrawalRequestLimit ?? 1,
         });
       }
     } catch (err) {
@@ -54,6 +56,12 @@ const WithdrawalSettings = () => {
       return;
     }
 
+    if (![1, 2, 3, 4, 5, 6].includes(formData.DailyWithdrawalRequestLimit)) {
+      setError('Daily withdrawal request limit must be between 1 and 6');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await setWithdrawalThreshold(formData);
       setSuccess(response.message || 'Settings updated successfully');
@@ -66,7 +74,7 @@ const WithdrawalSettings = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -144,6 +152,30 @@ const WithdrawalSettings = () => {
                   </p>
                 </div>
 
+                {/* Daily Withdrawal Request Limit */}
+                <div className="mb-8">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    Daily Withdrawal Request Limit
+                  </label>
+                  <select
+                    name="DailyWithdrawalRequestLimit"
+                    value={formData.DailyWithdrawalRequestLimit}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 transition-all text-gray-800"
+                  >
+                    <option value={1}>1</option>
+                    <option value={2}>2</option>
+                    <option value={3}>3</option>
+                    <option value={4}>4</option>
+                    <option value={5}>5</option>
+                    <option value={6}>6</option>
+                  </select>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Controls how many withdrawal requests a user can submit in a single day.
+                  </p>
+                </div>
+
                 {/* Action Buttons */}
                 <div className="flex gap-4 pt-6 border-t border-gray-200">
                   <button
@@ -187,6 +219,7 @@ const WithdrawalSettings = () => {
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• This threshold is enforced when users submit withdrawal requests</li>
                   <li>• Users cannot withdraw amounts below this threshold</li>
+                  <li>• You can allow 1 to 6 withdrawal requests per user per day</li>
                   <li>• Changes take effect immediately after saving</li>
                   <li>• Default minimum withdrawal amount is 100 if not set by admin</li>
                 </ul>

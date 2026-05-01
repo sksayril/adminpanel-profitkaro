@@ -1153,12 +1153,14 @@ export const getScratchCardDailyLimitSettings = async (): Promise<ScratchCardDai
 // Withdrawal Threshold Settings Interfaces
 export interface WithdrawalThresholdRequest {
   MinimumWithdrawalAmount: number;
+  DailyWithdrawalRequestLimit: 1 | 2 | 3 | 4 | 5 | 6;
 }
 
 export interface WithdrawalThresholdResponse {
   message: string;
   data: {
     MinimumWithdrawalAmount: number;
+    DailyWithdrawalRequestLimit: 1 | 2 | 3 | 4 | 5 | 6;
     updatedAt?: string;
   };
 }

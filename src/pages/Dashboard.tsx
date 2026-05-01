@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import StatsCard from '../components/StatsCard';
-import ReportsChart from '../components/ReportsChart';
 import AnalyticsChart from '../components/AnalyticsChart';
-import { Users, Wallet, Coins, TrendingUp, RefreshCw, AlertCircle, Clock, CheckCircle2, X, Activity, Ticket, RotateCcw, Shield } from 'lucide-react';
+import { Users, Wallet, Coins, TrendingUp, RefreshCw, AlertCircle, Clock, CheckCircle2, X, Activity, Ticket, RotateCcw, Shield, ArrowUpRight, ArrowDownRight, UsersRound, CalendarDays } from 'lucide-react';
 import {
   getDashboardStatistics,
   DashboardStatistics,
@@ -177,59 +176,54 @@ const Dashboard = () => {
               />
             </div>
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <div className="lg:col-span-2">
-                <ReportsChart registrationData={dashboardData.registrationChart.data} days={days} />
-              </div>
-              <div>
-                <AnalyticsChart withdrawalStats={dashboardData.withdrawals.statistics} />
-              </div>
+            {/* Analytics Section */}
+            <div className="mb-8">
+              <AnalyticsChart withdrawalStats={dashboardData.withdrawals.statistics} />
             </div>
 
             {/* Withdrawal Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+              <div className="rounded-2xl p-6 border border-amber-200 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-600">Pending Withdrawals</h3>
-                  <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="text-yellow-600" size={20} />
+                  <h3 className="text-sm font-semibold text-amber-800">Pending Withdrawals</h3>
+                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <Clock className="text-amber-700" size={20} />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">
+                <div className="text-3xl font-bold text-amber-950 mb-1">
                   {dashboardData.withdrawals.statistics.pending.count}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-amber-800/80">
                   {formatCurrency(dashboardData.withdrawals.statistics.pending.totalAmount)}
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+              <div className="rounded-2xl p-6 border border-emerald-200 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-600">Approved Withdrawals</h3>
-                  <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="text-green-600" size={20} />
+                  <h3 className="text-sm font-semibold text-emerald-800">Approved Withdrawals</h3>
+                  <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <ArrowUpRight className="text-emerald-700" size={20} />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">
+                <div className="text-3xl font-bold text-emerald-950 mb-1">
                   {dashboardData.withdrawals.statistics.approved.count}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-emerald-800/80">
                   {formatCurrency(dashboardData.withdrawals.statistics.approved.totalAmount)}
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+              <div className="rounded-2xl p-6 border border-rose-200 bg-gradient-to-br from-rose-50 via-red-50 to-pink-50 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-600">Rejected Withdrawals</h3>
-                  <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="text-red-600" size={20} />
+                  <h3 className="text-sm font-semibold text-rose-800">Rejected Withdrawals</h3>
+                  <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
+                    <ArrowDownRight className="text-rose-700" size={20} />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">
+                <div className="text-3xl font-bold text-rose-950 mb-1">
                   {dashboardData.withdrawals.statistics.rejected.count}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-rose-800/80">
                   {formatCurrency(dashboardData.withdrawals.statistics.rejected.totalAmount)}
                 </div>
               </div>
@@ -251,43 +245,73 @@ const Dashboard = () => {
             {/* Requested Summary (New API Fields) */}
             {dashboardData.requestedSummary && (
               <div className="mb-8">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Requested Summary</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-800">Requested Summary</h3>
+                  <span className="text-xs px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 font-medium">Live Insights</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
-                    <p className="text-xs text-gray-500">Users Today</p>
-                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.today)}</p>
+                  <div className="rounded-xl p-4 border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-blue-700 font-medium">Users Today</p>
+                      <UsersRound size={16} className="text-blue-700" />
+                    </div>
+                    <p className="text-2xl font-bold text-blue-950">{formatNumber(dashboardData.requestedSummary.users.today)}</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
-                    <p className="text-xs text-gray-500">Users Yesterday</p>
-                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.yesterday)}</p>
+                  <div className="rounded-xl p-4 border border-sky-200 bg-gradient-to-br from-sky-50 to-blue-50 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-sky-700 font-medium">Users Yesterday</p>
+                      <CalendarDays size={16} className="text-sky-700" />
+                    </div>
+                    <p className="text-2xl font-bold text-sky-950">{formatNumber(dashboardData.requestedSummary.users.yesterday)}</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
-                    <p className="text-xs text-gray-500">Users 7 Days</p>
-                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.sevenDays)}</p>
+                  <div className="rounded-xl p-4 border border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-violet-700 font-medium">Users 7 Days</p>
+                      <UsersRound size={16} className="text-violet-700" />
+                    </div>
+                    <p className="text-2xl font-bold text-violet-950">{formatNumber(dashboardData.requestedSummary.users.sevenDays)}</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
-                    <p className="text-xs text-gray-500">Users This Month</p>
-                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.thisMonth)}</p>
+                  <div className="rounded-xl p-4 border border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-indigo-700 font-medium">Users This Month</p>
+                      <CalendarDays size={16} className="text-indigo-700" />
+                    </div>
+                    <p className="text-2xl font-bold text-indigo-950">{formatNumber(dashboardData.requestedSummary.users.thisMonth)}</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
-                    <p className="text-xs text-gray-500">Users Last Month</p>
-                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.lastMonth)}</p>
+                  <div className="rounded-xl p-4 border border-slate-200 bg-gradient-to-br from-slate-50 to-gray-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-slate-700 font-medium">Users Last Month</p>
+                      <CalendarDays size={16} className="text-slate-700" />
+                    </div>
+                    <p className="text-2xl font-bold text-slate-950">{formatNumber(dashboardData.requestedSummary.users.lastMonth)}</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
-                    <p className="text-xs text-gray-500">Users Total</p>
-                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.users.total)}</p>
+                  <div className="rounded-xl p-4 border border-cyan-200 bg-gradient-to-br from-cyan-50 to-teal-50 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-cyan-700 font-medium">Users Total</p>
+                      <Users className="text-cyan-700" size={16} />
+                    </div>
+                    <p className="text-2xl font-bold text-cyan-950">{formatNumber(dashboardData.requestedSummary.users.total)}</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
-                    <p className="text-xs text-gray-500">Withdrawals Today</p>
-                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.withdrawals.today)}</p>
+                  <div className="rounded-xl p-4 border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-emerald-700 font-medium">Withdrawals Today</p>
+                      <ArrowUpRight size={16} className="text-emerald-700" />
+                    </div>
+                    <p className="text-2xl font-bold text-emerald-950">{formatNumber(dashboardData.requestedSummary.withdrawals.today)}</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
-                    <p className="text-xs text-gray-500">Withdrawals Yesterday</p>
-                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.withdrawals.yesterday)}</p>
+                  <div className="rounded-xl p-4 border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-amber-700 font-medium">Withdrawals Yesterday</p>
+                      <Clock size={16} className="text-amber-700" />
+                    </div>
+                    <p className="text-2xl font-bold text-amber-950">{formatNumber(dashboardData.requestedSummary.withdrawals.yesterday)}</p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 border border-gray-200 md:col-span-3 lg:col-span-1">
-                    <p className="text-xs text-gray-500">Withdrawals This Month</p>
-                    <p className="text-xl font-bold text-gray-900">{formatNumber(dashboardData.requestedSummary.withdrawals.thisMonth)}</p>
+                  <div className="rounded-xl p-4 border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 to-pink-50 shadow-sm md:col-span-3 lg:col-span-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-fuchsia-700 font-medium">Withdrawals This Month</p>
+                      <Wallet size={16} className="text-fuchsia-700" />
+                    </div>
+                    <p className="text-2xl font-bold text-fuchsia-950">{formatNumber(dashboardData.requestedSummary.withdrawals.thisMonth)}</p>
                   </div>
                 </div>
               </div>
