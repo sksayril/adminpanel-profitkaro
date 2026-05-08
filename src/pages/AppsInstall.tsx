@@ -10,7 +10,6 @@ import {
   getAppById,
   getAppSubmissions,
   updateSubmissionStatus,
-  bulkUpdateSubmissionStatus,
   deleteAppSubmission,
   App,
   AppSubmission,
@@ -57,6 +56,8 @@ const AppsInstall = () => {
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [selectedSubmissionIds, setSelectedSubmissionIds] = useState<string[]>([]);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
@@ -88,9 +89,11 @@ const AppsInstall = () => {
     }
   };
 
-  const fetchSubmissions = async () => {
-    setLoading(true);
-    setError('');
+  const fetchSubmissions = async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) {
+      setLoading(true);
+      setError('');
+    }
     try {
       const params: any = {};
       if (submissionFilters.status) params.status = submissionFilters.status;
@@ -100,7 +103,7 @@ const AppsInstall = () => {
 
       const response = await getAppSubmissions(params);
       setSubmissions(response.data.submissions);
-      setSelectedSubmissionIds([]);
+      if (!opts?.silent) setSelectedSubmissionIds([]);
       setSubmissionStats({
         totalSubmissions: response.data.totalSubmissions,
         pendingCount: response.data.pendingCount,
@@ -110,7 +113,7 @@ const AppsInstall = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load submissions');
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   };
 
@@ -131,25 +134,58 @@ const AppsInstall = () => {
       setError('Please select at least one submission');
       return;
     }
-
-    setLoading(true);
-    setError('');
-    try {
-      await bulkUpdateSubmissionStatus({
-        submissionIds: selectedSubmissionIds,
-        status,
-        adminNotes: adminNotes || undefined,
-      });
-      setSuccess(`Selected submissions ${status.toLowerCase()} successfully`);
-      setAdminNotes('');
-      setSelectedSubmissionIds([]);
-      fetchSubmissions();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update submissions');
-    } finally {
-      setLoading(false);
+    if (status === 'Rejected' && !adminNotes.trim()) {
+      setError('Please enter admin notes for bulk reject');
+      return;
     }
+
+    const pendingIds = submissions
+      .filter((s) => selectedSubmissionIds.includes(s.submissionId) && s.status === 'Pending')
+      .map((s) => s.submissionId);
+
+    if (pendingIds.length === 0) {
+      setError('Select at least one Pending submission');
+      return;
+    }
+
+    setBulkProcessing(true);
+    setError('');
+    setSuccess('');
+    setBulkProgress({ done: 0, total: pendingIds.length });
+
+    const notes = adminNotes.trim() || undefined;
+    let succeeded = 0;
+    let failed = 0;
+    const failMessages: string[] = [];
+
+    for (let i = 0; i < pendingIds.length; i++) {
+      const id = pendingIds[i];
+      try {
+        await updateSubmissionStatus(id, { status, adminNotes: notes });
+        succeeded++;
+      } catch (err) {
+        failed++;
+        failMessages.push(err instanceof Error ? err.message : 'Request failed');
+      }
+      setBulkProgress({ done: i + 1, total: pendingIds.length });
+    }
+
+    setBulkProcessing(false);
+    setBulkProgress(null);
+    setAdminNotes('');
+    setSelectedSubmissionIds([]);
+    await fetchSubmissions({ silent: true });
+
+    if (failed === 0) {
+      setSuccess(`${succeeded} submission(s) ${status === 'Approved' ? 'approved' : 'rejected'} successfully`);
+    } else {
+      setSuccess(`${succeeded} succeeded, ${failed} failed`);
+      setError(failMessages.slice(0, 3).join(' · ') + (failMessages.length > 3 ? '…' : ''));
+    }
+    setTimeout(() => {
+      setSuccess('');
+      setError('');
+    }, 6000);
   };
 
   const handleDeleteSubmission = async (submission: AppSubmission) => {
@@ -457,34 +493,6 @@ const AppsInstall = () => {
                 </div>
               </div>
 
-              {/* Bulk Actions */}
-              <div className="bg-white rounded-xl p-4 shadow-md border border-gray-200 mb-6 flex flex-col md:flex-row md:items-center gap-3">
-                <p className="text-sm text-gray-600">
-                  Selected: <span className="font-semibold">{selectedSubmissionIds.length}</span>
-                </p>
-                <input
-                  type="text"
-                  placeholder="Bulk action notes (optional)"
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <button
-                  onClick={() => handleBulkSubmissionAction('Approved')}
-                  disabled={loading || selectedSubmissionIds.length === 0}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
-                >
-                  Bulk Approve
-                </button>
-                <button
-                  onClick={() => handleBulkSubmissionAction('Rejected')}
-                  disabled={loading || selectedSubmissionIds.length === 0}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
-                >
-                  Bulk Reject
-                </button>
-              </div>
-
               {/* Apps Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
@@ -647,6 +655,48 @@ const AppsInstall = () => {
                 </div>
               </div>
 
+              {/* Bulk actions — sequential one API call per submission */}
+              <div className="bg-white rounded-xl p-4 shadow-md border border-gray-200 mb-6 flex flex-col gap-3">
+                <div className="flex flex-col md:flex-row md:items-center md:flex-wrap gap-3">
+                  <p className="text-sm text-gray-600 shrink-0">
+                    Selected: <span className="font-semibold">{selectedSubmissionIds.length}</span>
+                    <span className="text-gray-400"> (pending only)</span>
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Notes — optional for approve, required for reject"
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    disabled={bulkProcessing}
+                    className="flex-1 min-w-[200px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleBulkSubmissionAction('Approved')}
+                    disabled={bulkProcessing || loading || selectedSubmissionIds.length === 0}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {bulkProcessing ? 'Processing…' : 'Bulk Approve'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBulkSubmissionAction('Rejected')}
+                    disabled={bulkProcessing || loading || selectedSubmissionIds.length === 0}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {bulkProcessing ? 'Processing…' : 'Bulk Reject'}
+                  </button>
+                </div>
+                {bulkProgress && (
+                  <p className="text-xs text-purple-700 font-medium">
+                    Sending… {bulkProgress.done} / {bulkProgress.total}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500">
+                  Bulk actions call the server once per selected row in order (one by one), only for Pending submissions.
+                </p>
+              </div>
+
               {/* Submissions Table */}
               <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
                 {loading ? (
@@ -667,6 +717,7 @@ const AppsInstall = () => {
                           <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
                             <input
                               type="checkbox"
+                              disabled={bulkProcessing}
                               checked={
                                 submissions.length > 0 &&
                                 submissions.every((submission) => selectedSubmissionIds.includes(submission.submissionId))
@@ -688,6 +739,7 @@ const AppsInstall = () => {
                             <td className="px-6 py-4">
                               <input
                                 type="checkbox"
+                                disabled={bulkProcessing}
                                 checked={selectedSubmissionIds.includes(submission.submissionId)}
                                 onChange={() => toggleSubmissionSelection(submission.submissionId)}
                               />

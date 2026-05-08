@@ -16,6 +16,8 @@ import {
   Layers,
   Megaphone,
   Headphones,
+  Brain,
+  Share2,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,6 +37,8 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
     { icon: Headphones, label: 'Support', path: '/support-settings' },
     { icon: Megaphone, label: 'Ads Settings', path: '/ads-settings' },
     { icon: Shield, label: 'Captcha Settings', path: '/captcha-settings' },
+    { icon: Brain, label: 'Task & Quiz Settings', path: '/task-controls-settings' },
+    { icon: Share2, label: 'Social Links', path: '/social-links-settings' },
     { icon: UserCheck, label: 'Referral Settings', path: '/referral-settings' },
     { icon: Layers, label: 'Commission Slab', path: '/commission-slab-settings' },
     { icon: Calendar, label: 'Daily Bonus Settings', path: '/daily-bonus-settings' },

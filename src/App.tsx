@@ -21,6 +21,8 @@ import CommissionSlabSettings from './pages/CommissionSlabSettings';
 import SponsorPromotions from './pages/SponsorPromotions';
 import SupportSettings from './pages/SupportSettings';
 import AdsSettings from './pages/AdsSettings';
+import TaskControlsSettings from './pages/TaskControlsSettings';
+import SocialLinksSettings from './pages/SocialLinksSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -57,6 +59,22 @@ function App() {
         element={
           <ProtectedRoute>
             <CaptchaSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/task-controls-settings"
+        element={
+          <ProtectedRoute>
+            <TaskControlsSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/social-links-settings"
+        element={
+          <ProtectedRoute>
+            <SocialLinksSettings />
           </ProtectedRoute>
         }
       />

@@ -870,27 +870,35 @@ export interface GetUserActivityParams {
   type?: string;
 }
 
+export type TaskControlType =
+  | 'Captcha'
+  | 'DailySpin'
+  | 'ScratchCardDailyLimit'
+  | 'AppInstall'
+  | 'Quiz';
+
 export interface TaskControl {
   _id?: string;
-  taskType: 'Captcha' | 'DailySpin' | 'ScratchCardDailyLimit' | 'AppInstall';
+  taskType?: TaskControlType;
   IsActive?: boolean;
   AdsEnabled?: boolean;
-  DailyLimit?: number;
-  CoinsPerTask?: number;
-  [key: string]: any;
+  DailyLimit?: number | null;
+  CoinsPerTask?: number | null;
+  [key: string]: unknown;
 }
 
 export interface TaskControlsResponse {
   message: string;
-  data: {
-    controls: TaskControl[];
-  };
+  data:
+    | { controls: TaskControl[] }
+    | Partial<Record<TaskControlType, TaskControl | Record<string, unknown>>>
+    | TaskControl[];
 }
 
 export interface UpdateTaskControlRequest {
   IsActive?: boolean;
   AdsEnabled?: boolean;
-  DailyLimit?: number;
+  DailyLimit?: number | null;
   CoinsPerTask?: number;
 }
 
@@ -898,6 +906,62 @@ export interface TaskControlResponse {
   message: string;
   data: TaskControl;
 }
+
+/** Display / save order — Quiz first for admin UX. */
+export const TASK_CONTROL_TYPE_ORDER: TaskControlType[] = [
+  'Quiz',
+  'Captcha',
+  'DailySpin',
+  'ScratchCardDailyLimit',
+  'AppInstall',
+];
+
+/** Normalize GET /task-controls payload (array, { controls: [] }, or keyed object). */
+export const normalizeTaskControlsData = (
+  raw: TaskControlsResponse['data'] | undefined
+): Record<TaskControlType, TaskControl> => {
+  const initial = (): Record<TaskControlType, TaskControl> =>
+    TASK_CONTROL_TYPE_ORDER.reduce((acc, key) => {
+      acc[key] = { taskType: key };
+      return acc;
+    }, {} as Record<TaskControlType, TaskControl>);
+
+  if (raw === undefined || raw === null) return initial();
+
+  if (Array.isArray(raw)) {
+    const acc = initial();
+    for (const row of raw) {
+      const t = (row?.taskType as TaskControlType) || '';
+      if (TASK_CONTROL_TYPE_ORDER.includes(t)) acc[t] = { ...acc[t], ...row };
+    }
+    return acc;
+  }
+
+  if (typeof raw !== 'object') return initial();
+
+  const ctrls = (raw as { controls?: TaskControl[] }).controls;
+  if (Array.isArray(ctrls)) {
+    const acc = initial();
+    for (const row of ctrls) {
+      const t = (row?.taskType as TaskControlType) || '';
+      if (TASK_CONTROL_TYPE_ORDER.includes(t)) acc[t] = { ...acc[t], ...row };
+    }
+    return acc;
+  }
+
+  const acc = initial();
+  for (const key of TASK_CONTROL_TYPE_ORDER) {
+    const block = (raw as Record<string, unknown>)[key];
+    if (block && typeof block === 'object' && !Array.isArray(block)) {
+      acc[key] = {
+        ...acc[key],
+        ...(block as TaskControl),
+        taskType: key,
+      };
+    }
+  }
+  return acc;
+};
 
 // Get User Activity API
 export const getUserActivity = async (userId: string, params?: GetUserActivityParams): Promise<UserActivityResponse> => {
@@ -927,7 +991,7 @@ export const getTaskControls = async (): Promise<TaskControlsResponse> => {
 
 // Update Task Control API
 export const updateTaskControl = async (
-  taskType: 'Captcha' | 'DailySpin' | 'ScratchCardDailyLimit' | 'AppInstall',
+  taskType: TaskControlType,
   data: UpdateTaskControlRequest
 ): Promise<TaskControlResponse> => {
   const response = await fetch(`${BASE_URL}/task-controls/${taskType}`, {
@@ -1148,6 +1212,47 @@ export const getScratchCardDailyLimitSettings = async (): Promise<ScratchCardDai
     headers: getAuthHeaders(),
   });
 
+  return handleApiResponse(response);
+};
+
+// Social links (admin)
+export interface SocialLinksData {
+  _id: string;
+  TelegramLink?: string | null;
+  YouTubeLink?: string | null;
+  InstagramLink?: string | null;
+  IsActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SocialLinksResponse {
+  message: string;
+  data: SocialLinksData;
+}
+
+/** All fields optional; omit unchanged. Use `null` or `""` to clear a link. */
+export interface SocialLinksUpdateRequest {
+  TelegramLink?: string | null;
+  YouTubeLink?: string | null;
+  InstagramLink?: string | null;
+  IsActive?: boolean;
+}
+
+export const getSocialLinks = async (): Promise<SocialLinksResponse> => {
+  const response = await fetch(`${BASE_URL}/social-links`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleApiResponse(response);
+};
+
+export const updateSocialLinks = async (data: SocialLinksUpdateRequest): Promise<SocialLinksResponse> => {
+  const response = await fetch(`${BASE_URL}/social-links`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
   return handleApiResponse(response);
 };
 
