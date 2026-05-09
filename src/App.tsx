@@ -22,6 +22,7 @@ import SponsorPromotions from './pages/SponsorPromotions';
 import SupportSettings from './pages/SupportSettings';
 import AdsSettings from './pages/AdsSettings';
 import TaskControlsSettings from './pages/TaskControlsSettings';
+import PopupMessageSettings from './pages/PopupMessageSettings';
 import SocialLinksSettings from './pages/SocialLinksSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -195,6 +196,14 @@ function App() {
         element={
           <ProtectedRoute>
             <AdsSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/popup-message-settings"
+        element={
+          <ProtectedRoute>
+            <PopupMessageSettings />
           </ProtectedRoute>
         }
       />

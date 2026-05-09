@@ -130,6 +130,14 @@ const getAuthHeaders = (): HeadersInit => {
   };
 };
 
+/** Auth only — use with FormData so the browser sets multipart boundaries. */
+const getAuthHeadersMultipart = (): HeadersInit => {
+  const token = getToken();
+  return {
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
+
 // Handle API response and check for token expiration
 const handleApiResponse = async (response: Response): Promise<any> => {
   const result = await response.json();
@@ -1824,5 +1832,65 @@ export const updateTaskAdsSettings = async (
     body: JSON.stringify(data),
   });
 
+  return handleApiResponse(response);
+};
+
+// --- Popup template (GET/POST/PUT /admin/popup-template) ---
+
+export interface PopupTemplate {
+  _id?: string;
+  Title: string;
+  Body: string;
+  ImageUrl: string | null;
+  ActionLabel: string;
+  ActionUrl: string;
+  IsActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PopupTemplateResponse {
+  message: string;
+  data: PopupTemplate | null;
+}
+
+export interface PopupTemplateJsonBody {
+  Title?: string;
+  Body?: string;
+  ActionLabel?: string;
+  ActionUrl?: string;
+  IsActive?: boolean;
+  imageBase64?: string;
+  fileName?: string;
+  ImageUrl?: string | null;
+}
+
+export const getPopupTemplate = async (): Promise<PopupTemplateResponse> => {
+  const response = await fetch(`${BASE_URL}/popup-template`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleApiResponse(response);
+};
+
+/** Create or replace the single popup template (multipart or JSON). */
+export const postPopupTemplate = async (body: FormData | PopupTemplateJsonBody): Promise<PopupTemplateResponse> => {
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+  const response = await fetch(`${BASE_URL}/popup-template`, {
+    method: 'POST',
+    headers: isForm ? getAuthHeadersMultipart() : getAuthHeaders(),
+    body: isForm ? body : JSON.stringify(body),
+  });
+  return handleApiResponse(response);
+};
+
+/** Partial update; same image options as POST. */
+export const putPopupTemplate = async (body: FormData | PopupTemplateJsonBody): Promise<PopupTemplateResponse> => {
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+  const response = await fetch(`${BASE_URL}/popup-template`, {
+    method: 'PUT',
+    headers: isForm ? getAuthHeadersMultipart() : getAuthHeaders(),
+    body: isForm ? body : JSON.stringify(body),
+  });
   return handleApiResponse(response);
 };

@@ -1,15 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Brain,
-  Shield,
-  RotateCcw,
-  Ticket,
-  Smartphone,
-  Save,
-  RefreshCw,
-  AlertCircle,
-  CheckCircle2,
-} from 'lucide-react';
+import { Brain, Save, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import {
@@ -68,20 +58,19 @@ const buildPayload = (row: TaskFormRow): { ok: true; payload: UpdateTaskControlR
   return { ok: true, payload };
 };
 
-const taskIcons: Record<TaskControlType, typeof Brain> = {
+/** Task types shown on this page (others remain in API but are not editable here). */
+const UI_VISIBLE_TASKS = ['Quiz'] as const satisfies readonly TaskControlType[];
+
+const taskIcons: Pick<Record<TaskControlType, typeof Brain>, (typeof UI_VISIBLE_TASKS)[number]> = {
   Quiz: Brain,
-  Captcha: Shield,
-  DailySpin: RotateCcw,
-  ScratchCardDailyLimit: Ticket,
-  AppInstall: Smartphone,
 };
 
-const taskLabels: Record<TaskControlType, string> = {
+const taskLabels: Pick<Record<TaskControlType, string>, (typeof UI_VISIBLE_TASKS)[number]> = {
   Quiz: 'Quiz',
-  Captcha: 'Captcha',
-  DailySpin: 'Daily Spin',
-  ScratchCardDailyLimit: 'Scratch Card (daily limit)',
-  AppInstall: 'App Install',
+};
+
+const cardAccent: Pick<Record<TaskControlType, string>, (typeof UI_VISIBLE_TASKS)[number]> = {
+  Quiz: 'from-violet-500/15 to-fuchsia-500/10 border-violet-200',
 };
 
 const TaskControlsSettings = () => {
@@ -156,14 +145,6 @@ const TaskControlsSettings = () => {
     }
   };
 
-  const cardAccent: Record<TaskControlType, string> = {
-    Quiz: 'from-violet-500/15 to-fuchsia-500/10 border-violet-200',
-    Captcha: 'from-sky-500/15 to-blue-500/10 border-sky-200',
-    DailySpin: 'from-amber-500/15 to-orange-500/10 border-amber-200',
-    ScratchCardDailyLimit: 'from-pink-500/15 to-rose-500/10 border-pink-200',
-    AppInstall: 'from-emerald-500/15 to-teal-500/10 border-emerald-200',
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar isExpanded={isSidebarExpanded} />
@@ -177,10 +158,10 @@ const TaskControlsSettings = () => {
                 <Brain className="text-white" size={24} />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Task &amp; Quiz controls</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Quiz controls</h1>
                 <p className="text-gray-500 text-sm">
-                  Central settings for Captcha, Daily Spin, Scratch Card, App Install, and Quiz — from{' '}
-                  <code className="text-xs bg-gray-100 px-1 rounded">GET/POST /admin/task-controls</code>
+                  Enable/disable quiz, daily attempts, coins per task, and ads — from{' '}
+                  <code className="text-xs bg-gray-100 px-1 rounded">GET/POST /admin/task-controls/Quiz</code>
                 </p>
               </div>
             </div>
@@ -218,10 +199,9 @@ const TaskControlsSettings = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {TASK_CONTROL_TYPE_ORDER.map((task) => {
+              {UI_VISIBLE_TASKS.map((task) => {
                 const Icon = taskIcons[task];
                 const row = forms[task];
-                const isQuiz = task === 'Quiz';
 
                 return (
                   <div
@@ -230,19 +210,13 @@ const TaskControlsSettings = () => {
                   >
                     <div className="bg-white/80 backdrop-blur-sm px-6 py-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            isQuiz ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-700'
-                          }`}
-                        >
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-violet-100 text-violet-700">
                           <Icon size={20} />
                         </div>
                         <div>
                           <h2 className="text-lg font-bold text-gray-900">{taskLabels[task]}</h2>
                           <p className="text-xs text-gray-500">
-                            {isQuiz
-                              ? 'Enable/disable quiz, daily attempts, coins per task, ads'
-                              : `POST /task-controls/${task}`}
+                            Enable/disable quiz, daily attempts, coins per task, ads
                           </p>
                         </div>
                       </div>
