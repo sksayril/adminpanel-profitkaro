@@ -98,16 +98,6 @@ const PopupMessageSettings = () => {
 
     const isCreate = !templateId;
 
-    if (isCreate) {
-      const hasImage =
-        !!imageFile ||
-        form.externalImageUrl.trim() !== '';
-      if (!hasImage) {
-        setError('First save requires an image: upload a file or set an external Image URL.');
-        return;
-      }
-    }
-
     setSaving(true);
     try {
       if (imageFile) {
@@ -272,10 +262,11 @@ const PopupMessageSettings = () => {
                 </div>
 
                 <div className="border-t border-gray-100 pt-6">
-                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-800">
+                  <div className="flex items-center gap-2 mb-1 text-sm font-semibold text-gray-800">
                     <ImageIcon size={18} className="text-violet-600" />
-                    Banner image
+                    Banner image <span className="font-normal text-gray-500">(optional)</span>
                   </div>
+                  <p className="text-xs text-gray-500 mb-3">You can save text and links only; add an image anytime.</p>
                   {displayImageSrc && (
                     <div className="mb-4 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 max-w-md">
                       <img src={displayImageSrc} alt="Popup banner" className="w-full h-auto max-h-56 object-contain" />
@@ -290,7 +281,7 @@ const PopupMessageSettings = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Upload image (multipart)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Upload image (multipart, optional)</label>
                       <input
                         type="file"
                         accept="image/*"
@@ -301,7 +292,9 @@ const PopupMessageSettings = () => {
                           if (f) setClearStoredImage(false);
                         }}
                       />
-                      <p className="text-xs text-gray-500 mt-1">Sent as form field <code className="bg-gray-100 px-1 rounded">image</code> when saving.</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        If you choose a file, it is sent as <code className="bg-gray-100 px-1 rounded">image</code> on save.
+                      </p>
                     </div>
 
                     <div>
@@ -356,8 +349,8 @@ const PopupMessageSettings = () => {
                   </button>
                   <span className="text-xs text-gray-500">
                     {templateId
-                      ? 'Updates use PUT. Upload a file to send multipart; otherwise JSON.'
-                      : 'First save uses POST; an image file or external URL is required.'}
+                      ? 'Updates use PUT. With a file attached, request is multipart; otherwise JSON. Image is optional.'
+                      : 'First save uses POST. Image URL and file are optional—backend may still reject an empty template if it requires a banner.'}
                   </span>
                 </div>
               </div>
@@ -368,7 +361,7 @@ const PopupMessageSettings = () => {
             <p className="font-semibold mb-2">API behaviour</p>
             <ul className="list-disc list-inside space-y-1 text-violet-900/90">
               <li>GET returns the current template including S3 <code className="text-xs bg-white/80 px-1 rounded">ImageUrl</code>.</li>
-              <li>POST replaces the single template; on first create an image is required (file, base64, or URL).</li>
+              <li>POST replaces the single template; image (file, base64, or URL) can be omitted depending on backend rules.</li>
               <li>PUT updates only fields you send; set <code className="text-xs bg-white/80 px-1 rounded">ImageUrl</code> to null or empty to clear it.</li>
             </ul>
           </div>

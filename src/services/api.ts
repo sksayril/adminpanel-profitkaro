@@ -887,6 +887,8 @@ export type TaskControlType =
 
 export interface TaskControl {
   _id?: string;
+  /** Backend may send PascalCase */
+  TaskType?: TaskControlType;
   taskType?: TaskControlType;
   IsActive?: boolean;
   AdsEnabled?: boolean;
@@ -924,6 +926,83 @@ export const TASK_CONTROL_TYPE_ORDER: TaskControlType[] = [
   'AppInstall',
 ];
 
+const taskControlTypeFromRow = (row: unknown): TaskControlType | null => {
+  if (!row || typeof row !== 'object') return null;
+  const r = row as Record<string, unknown>;
+  const t = (r.taskType ?? r.TaskType ?? r.task_type ?? r.type) as string | undefined;
+  if (t && TASK_CONTROL_TYPE_ORDER.includes(t as TaskControlType)) {
+    return t as TaskControlType;
+  }
+  return null;
+};
+
+const pickFirstDefined = (...vals: unknown[]): unknown =>
+  vals.find((v) => v !== undefined);
+
+/** Map API rows (camelCase / snake_case) onto fields the admin form reads (PascalCase). */
+const mergeTaskControlIntoSlot = (
+  slot: TaskControl,
+  row: unknown
+): TaskControl => {
+  if (!row || typeof row !== 'object') return slot;
+  const r = row as Record<string, unknown>;
+
+  const isActive = pickFirstDefined(r.IsActive, r.isActive);
+  const adsEnabled = pickFirstDefined(r.AdsEnabled, r.adsEnabled);
+  const dailyLimit = pickFirstDefined(r.DailyLimit, r.dailyLimit, r.daily_limit);
+  const coinsPerTask = pickFirstDefined(r.CoinsPerTask, r.coinsPerTask, r.coins_per_task);
+
+  const merged: TaskControl = {
+    ...slot,
+    ...(row as TaskControl),
+    taskType: slot.taskType,
+  };
+
+  if (isActive !== undefined) merged.IsActive = Boolean(isActive);
+  if (adsEnabled !== undefined) merged.AdsEnabled = Boolean(adsEnabled);
+  if (dailyLimit !== undefined) {
+    merged.DailyLimit = dailyLimit === null ? null : (Number(dailyLimit) as number);
+  }
+  if (coinsPerTask !== undefined) {
+    merged.CoinsPerTask = coinsPerTask === null ? null : (Number(coinsPerTask) as number);
+  }
+
+  return merged;
+};
+
+/** Find task-control rows whether `data` is an array or nested `{ controls | taskControls | data }. */
+const extractTaskControlRowArray = (raw: unknown): TaskControl[] | null => {
+  if (raw === undefined || raw === null) return null;
+  if (Array.isArray(raw)) return raw as TaskControl[];
+
+  if (typeof raw !== 'object') return null;
+
+  const tryKeys = (o: Record<string, unknown>): TaskControl[] | null => {
+    for (const k of ['controls', 'taskControls', 'items']) {
+      const a = o[k];
+      if (Array.isArray(a)) return a as TaskControl[];
+    }
+    return null;
+  };
+
+  const o = raw as Record<string, unknown>;
+  const direct = tryKeys(o);
+  if (direct) return direct;
+
+  const inner = o.data;
+  if (inner !== undefined && inner !== raw) {
+    if (Array.isArray(inner)) return inner as TaskControl[];
+    if (typeof inner === 'object' && inner !== null) {
+      const nested = tryKeys(inner as Record<string, unknown>);
+      if (nested) return nested;
+      const deep = (inner as Record<string, unknown>).data;
+      if (Array.isArray(deep)) return deep as TaskControl[];
+    }
+  }
+
+  return null;
+};
+
 /** Normalize GET /task-controls payload (array, { controls: [] }, or keyed object). */
 export const normalizeTaskControlsData = (
   raw: TaskControlsResponse['data'] | undefined
@@ -936,36 +1015,31 @@ export const normalizeTaskControlsData = (
 
   if (raw === undefined || raw === null) return initial();
 
-  if (Array.isArray(raw)) {
+  const rows = extractTaskControlRowArray(raw);
+  if (rows) {
     const acc = initial();
-    for (const row of raw) {
-      const t = (row?.taskType as TaskControlType) || '';
-      if (TASK_CONTROL_TYPE_ORDER.includes(t)) acc[t] = { ...acc[t], ...row };
+    for (const row of rows) {
+      const t = taskControlTypeFromRow(row);
+      if (t) acc[t] = mergeTaskControlIntoSlot(acc[t], row);
     }
     return acc;
   }
 
   if (typeof raw !== 'object') return initial();
 
-  const ctrls = (raw as { controls?: TaskControl[] }).controls;
-  if (Array.isArray(ctrls)) {
-    const acc = initial();
-    for (const row of ctrls) {
-      const t = (row?.taskType as TaskControlType) || '';
-      if (TASK_CONTROL_TYPE_ORDER.includes(t)) acc[t] = { ...acc[t], ...row };
-    }
-    return acc;
-  }
-
   const acc = initial();
+  const rawRec = raw as Record<string, unknown>;
   for (const key of TASK_CONTROL_TYPE_ORDER) {
-    const block = (raw as Record<string, unknown>)[key];
+    const block =
+      rawRec[key] ?? rawRec[key.toLowerCase() as keyof typeof rawRec];
     if (block && typeof block === 'object' && !Array.isArray(block)) {
-      acc[key] = {
-        ...acc[key],
-        ...(block as TaskControl),
-        taskType: key,
-      };
+      acc[key] = mergeTaskControlIntoSlot(
+        {
+          ...acc[key],
+          taskType: key,
+        },
+        block
+      );
     }
   }
   return acc;

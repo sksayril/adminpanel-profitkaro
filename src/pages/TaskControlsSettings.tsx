@@ -15,18 +15,35 @@ import {
 type TaskFormRow = {
   IsActive: boolean;
   AdsEnabled: boolean;
-  dailyLimitNoCap: boolean;
   DailyLimit: string;
   CoinsPerTask: string;
 };
 
-const controlToForm = (c: TaskControl): TaskFormRow => ({
-  IsActive: c.IsActive !== false,
-  AdsEnabled: !!c.AdsEnabled,
-  dailyLimitNoCap: c.DailyLimit === null || c.DailyLimit === undefined,
-  DailyLimit: c.DailyLimit != null ? String(c.DailyLimit) : '',
-  CoinsPerTask: c.CoinsPerTask != null ? String(c.CoinsPerTask) : '',
-});
+const pickDefined = (...vals: unknown[]): unknown =>
+  vals.find((v) => v !== undefined);
+
+const controlToForm = (c: TaskControl): TaskFormRow => {
+  const r = c as Record<string, unknown>;
+  const active = pickDefined(r.IsActive, r.isActive);
+  const ads = pickDefined(r.AdsEnabled, r.adsEnabled);
+  const daily = pickDefined(r.DailyLimit, r.dailyLimit, r.daily_limit);
+  const coins = pickDefined(r.CoinsPerTask, r.coinsPerTask, r.coins_per_task);
+
+  const formatNumLike = (v: unknown): string => {
+    if (v === null || v === undefined || v === '') return '';
+    if (typeof v === 'number' && Number.isFinite(v)) return String(v);
+    const n = Number(v);
+    return Number.isFinite(n) ? String(n) : String(v);
+  };
+
+  return {
+    IsActive: active === undefined ? c.IsActive !== false : Boolean(active),
+    AdsEnabled: ads !== undefined ? Boolean(ads) : !!c.AdsEnabled,
+    DailyLimit: daily !== undefined && daily !== null && daily !== '' ? formatNumLike(daily) : formatNumLike(c.DailyLimit ?? ''),
+    CoinsPerTask:
+      coins !== undefined && coins !== null && coins !== '' ? formatNumLike(coins) : formatNumLike(c.CoinsPerTask ?? ''),
+  };
+};
 
 const buildPayload = (row: TaskFormRow): { ok: true; payload: UpdateTaskControlRequest } | { ok: false; message: string } => {
   const payload: UpdateTaskControlRequest = {
@@ -34,18 +51,14 @@ const buildPayload = (row: TaskFormRow): { ok: true; payload: UpdateTaskControlR
     AdsEnabled: row.AdsEnabled,
   };
 
-  if (row.dailyLimitNoCap) {
-    payload.DailyLimit = null;
-  } else {
-    if (row.DailyLimit.trim() === '') {
-      return { ok: false, message: 'Enter a daily limit or enable “No daily limit cap”.' };
-    }
-    const n = Number(row.DailyLimit);
-    if (!Number.isFinite(n) || n < 1) {
-      return { ok: false, message: 'Daily limit must be a positive number or use “no cap”.' };
-    }
-    payload.DailyLimit = Math.floor(n);
+  if (row.DailyLimit.trim() === '') {
+    return { ok: false, message: 'Enter how many quiz attempts each user can make per day (e.g. 20).' };
   }
+  const dailyN = Number(row.DailyLimit);
+  if (!Number.isFinite(dailyN) || dailyN < 1) {
+    return { ok: false, message: 'Daily quiz attempts must be a positive whole number (1 or more).' };
+  }
+  payload.DailyLimit = Math.floor(dailyN);
 
   if (row.CoinsPerTask.trim() !== '') {
     const n = Number(row.CoinsPerTask);
@@ -60,6 +73,7 @@ const buildPayload = (row: TaskFormRow): { ok: true; payload: UpdateTaskControlR
 
 /** Task types shown on this page (others remain in API but are not editable here). */
 const UI_VISIBLE_TASKS = ['Quiz'] as const satisfies readonly TaskControlType[];
+type VisibleTaskControl = (typeof UI_VISIBLE_TASKS)[number];
 
 const taskIcons: Pick<Record<TaskControlType, typeof Brain>, (typeof UI_VISIBLE_TASKS)[number]> = {
   Quiz: Brain,
@@ -83,7 +97,6 @@ const TaskControlsSettings = () => {
     const empty: TaskFormRow = {
       IsActive: true,
       AdsEnabled: false,
-      dailyLimitNoCap: true,
       DailyLimit: '',
       CoinsPerTask: '',
     };
@@ -122,7 +135,7 @@ const TaskControlsSettings = () => {
     setForms((prev) => ({ ...prev, [task]: { ...prev[task], ...patch } }));
   };
 
-  const handleSave = async (task: TaskControlType) => {
+  const handleSave = async (task: VisibleTaskControl) => {
     const row = forms[task];
     const built = buildPayload(row);
     if (!built.ok) {
@@ -262,29 +275,19 @@ const TaskControlsSettings = () => {
                       </label>
 
                       <div>
-                        <label className="flex items-center gap-2 mb-2">
-                          <input
-                            type="checkbox"
-                            className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
-                            checked={row.dailyLimitNoCap}
-                            onChange={(e) => patchForm(task, { dailyLimitNoCap: e.target.checked })}
-                          />
-                          <span className="text-sm font-medium text-gray-700">No daily limit cap</span>
-                        </label>
-                        <p className="text-xs text-gray-500 mb-2 ml-6">
-                          Uncheck to set attempts per user per day (e.g. Quiz: 20). Checked sends{' '}
-                          <code className="bg-gray-100 px-1 rounded">DailyLimit: null</code>.
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Quiz attempts per user per day</label>
+                        <input
+                          type="number"
+                          min={1}
+                          className="w-full max-w-xs px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                          placeholder="e.g. 20"
+                          value={row.DailyLimit}
+                          onChange={(e) => patchForm(task, { DailyLimit: e.target.value })}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Saved as <code className="bg-gray-100 px-1 rounded">DailyLimit</code> (required). If the API had no
+                          limit before, enter the number you want here before saving.
                         </p>
-                        {!row.dailyLimitNoCap && (
-                          <input
-                            type="number"
-                            min={1}
-                            className="ml-6 w-full max-w-xs px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                            placeholder="e.g. 20"
-                            value={row.DailyLimit}
-                            onChange={(e) => patchForm(task, { DailyLimit: e.target.value })}
-                          />
-                        )}
                       </div>
 
                       <div>
@@ -309,8 +312,11 @@ const TaskControlsSettings = () => {
           <div className="mt-8 bg-indigo-50 border border-indigo-100 rounded-xl p-5 text-sm text-indigo-900">
             <p className="font-semibold mb-2">API tips</p>
             <ul className="list-disc list-inside space-y-1 text-indigo-800/90">
-              <li>Disable quiz and remove cap: <code className="text-xs bg-white/80 px-1 rounded">{'{ "IsActive": false, "DailyLimit": null }'}</code></li>
-              <li>Enable quiz with 20/day: <code className="text-xs bg-white/80 px-1 rounded">{'{ "IsActive": true, "DailyLimit": 20 }'}</code></li>
+              <li>
+                Saving always sends your <code className="text-xs bg-white/80 px-1 rounded">DailyLimit</code> as the number above (e.g.{' '}
+                <code className="text-xs bg-white/80 px-1 rounded">{'{ "IsActive": true, "DailyLimit": 20 }'}</code>).
+              </li>
+              <li>Disable quiz without changing attempts: turn off Active and save (limit field must still have a valid number).</li>
             </ul>
           </div>
         </div>
