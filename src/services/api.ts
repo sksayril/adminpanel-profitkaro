@@ -130,14 +130,6 @@ const getAuthHeaders = (): HeadersInit => {
   };
 };
 
-/** Auth only — use with FormData so the browser sets multipart boundaries. */
-const getAuthHeadersMultipart = (): HeadersInit => {
-  const token = getToken();
-  return {
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
-
 // Handle API response and check for token expiration
 const handleApiResponse = async (response: Response): Promise<any> => {
   const result = await response.json();
@@ -375,6 +367,110 @@ export const updateWithdrawalStatus = async (
     body: JSON.stringify(data),
   });
 
+  return handleApiResponse(response);
+};
+
+// --- Gift voucher withdrawal requests (GET/POST /admin/gift-voucher/...) ---
+
+export type GiftVoucherRequestStatus = 'Pending' | 'Approved' | 'Rejected' | 'Delivered';
+
+export interface GiftVoucherRequest {
+  requestId: string;
+  userId: string;
+  userMobileNumber: string;
+  userDeviceId: string;
+  type: string;
+  brand: string;
+  amount: number;
+  status: GiftVoucherRequestStatus;
+  voucherCode: string | null;
+  adminNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GiftVoucherRequestsResponse {
+  message: string;
+  data: {
+    requests: GiftVoucherRequest[];
+    totalRequests: number;
+    pendingCount: number;
+    approvedCount: number;
+    rejectedCount: number;
+    deliveredCount: number;
+  };
+}
+
+export interface GiftVoucherApproveRejectBody {
+  adminNotes?: string;
+}
+
+export interface GiftVoucherDeliverBody {
+  voucherCode: string;
+  adminNotes?: string;
+}
+
+export interface GiftVoucherActionResponse {
+  message: string;
+  data: {
+    requestId: string;
+    type?: string;
+    brand?: string;
+    amount: number;
+    status: GiftVoucherRequestStatus | string;
+    voucherCode?: string | null;
+    adminNotes?: string | null;
+    userWalletBalance: number;
+    updatedAt: string;
+  };
+}
+
+export const getGiftVoucherRequests = async (
+  status?: GiftVoucherRequestStatus
+): Promise<GiftVoucherRequestsResponse> => {
+  const url = status
+    ? `${BASE_URL}/gift-voucher/requests?status=${encodeURIComponent(status)}`
+    : `${BASE_URL}/gift-voucher/requests`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleApiResponse(response);
+};
+
+export const approveGiftVoucherRequest = async (
+  requestId: string,
+  body?: GiftVoucherApproveRejectBody
+): Promise<GiftVoucherActionResponse> => {
+  const response = await fetch(`${BASE_URL}/gift-voucher/request/${requestId}/approve`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body ?? {}),
+  });
+  return handleApiResponse(response);
+};
+
+export const rejectGiftVoucherRequest = async (
+  requestId: string,
+  body?: GiftVoucherApproveRejectBody
+): Promise<GiftVoucherActionResponse> => {
+  const response = await fetch(`${BASE_URL}/gift-voucher/request/${requestId}/reject`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body ?? {}),
+  });
+  return handleApiResponse(response);
+};
+
+export const deliverGiftVoucherRequest = async (
+  requestId: string,
+  body: GiftVoucherDeliverBody
+): Promise<GiftVoucherActionResponse> => {
+  const response = await fetch(`${BASE_URL}/gift-voucher/request/${requestId}/deliver`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body),
+  });
   return handleApiResponse(response);
 };
 
@@ -1910,33 +2006,34 @@ export const updateTaskAdsSettings = async (
 };
 
 // --- Popup template (GET/POST/PUT /admin/popup-template) ---
+// Stored fields: Title, Description, IsActive. GET merges legacy Body into Description for display until saved with Description.
+// Legacy image/action fields are ignored by the API if sent.
 
 export interface PopupTemplate {
   _id?: string;
-  Title: string;
-  Body: string;
-  ImageUrl: string | null;
-  ActionLabel: string;
-  ActionUrl: string;
-  IsActive: boolean;
+  Title?: string;
+  /** Main popup copy */
+  Description?: string;
+  /** Legacy; omitted from saves in favour of Description */
+  Body?: string;
+  IsActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface PopupTemplateResponse {
   message: string;
+  /** Present when nothing saved yet — e.g. "No popup template saved yet" */
+  note?: string;
   data: PopupTemplate | null;
 }
 
+/** POST/PUT JSON body. Omit `Body` when sending `Description`; `Body` is an alias only if `Description` is omitted. */
 export interface PopupTemplateJsonBody {
   Title?: string;
+  Description?: string;
   Body?: string;
-  ActionLabel?: string;
-  ActionUrl?: string;
-  IsActive?: boolean;
-  imageBase64?: string;
-  fileName?: string;
-  ImageUrl?: string | null;
+  IsActive?: boolean | 'true' | 'false';
 }
 
 export const getPopupTemplate = async (): Promise<PopupTemplateResponse> => {
@@ -1947,24 +2044,20 @@ export const getPopupTemplate = async (): Promise<PopupTemplateResponse> => {
   return handleApiResponse(response);
 };
 
-/** Create or replace the single popup template (multipart or JSON). */
-export const postPopupTemplate = async (body: FormData | PopupTemplateJsonBody): Promise<PopupTemplateResponse> => {
-  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+export const postPopupTemplate = async (body: PopupTemplateJsonBody): Promise<PopupTemplateResponse> => {
   const response = await fetch(`${BASE_URL}/popup-template`, {
     method: 'POST',
-    headers: isForm ? getAuthHeadersMultipart() : getAuthHeaders(),
-    body: isForm ? body : JSON.stringify(body),
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body),
   });
   return handleApiResponse(response);
 };
 
-/** Partial update; same image options as POST. */
-export const putPopupTemplate = async (body: FormData | PopupTemplateJsonBody): Promise<PopupTemplateResponse> => {
-  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+export const putPopupTemplate = async (body: PopupTemplateJsonBody): Promise<PopupTemplateResponse> => {
   const response = await fetch(`${BASE_URL}/popup-template`, {
     method: 'PUT',
-    headers: isForm ? getAuthHeadersMultipart() : getAuthHeaders(),
-    body: isForm ? body : JSON.stringify(body),
+    headers: getAuthHeaders(),
+    body: JSON.stringify(body),
   });
   return handleApiResponse(response);
 };

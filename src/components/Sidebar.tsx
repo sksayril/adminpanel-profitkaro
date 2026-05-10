@@ -19,6 +19,7 @@ import {
   Brain,
   Share2,
   MessageSquare,
+  ShoppingBag,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ const Sidebar = ({ isExpanded }: SidebarProps) => {
   const menuItems = [
     { icon: LayoutGrid, label: 'Dashboard', path: '/dashboard' },
     { icon: CreditCard, label: 'Payments', path: '/payments' },
+    { icon: ShoppingBag, label: 'Gift voucher requests', path: '/gift-voucher-requests' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: Smartphone, label: 'Apps Install', path: '/apps-install' },
     { icon: Megaphone, label: 'Sponsor', path: '/sponsor-promotions' },

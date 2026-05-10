@@ -12,6 +12,7 @@ import ScratchCardSettings from './pages/ScratchCardSettings';
 import ScratchCardDailyLimitSettings from './pages/ScratchCardDailyLimitSettings';
 import SignupBonusSettings from './pages/SignupBonusSettings';
 import WithdrawalRequests from './pages/WithdrawalRequests';
+import GiftVoucherRequests from './pages/GiftVoucherRequests';
 import Users from './pages/Users';
 import AppsInstall from './pages/AppsInstall';
 import CoinConversionSettings from './pages/CoinConversionSettings';
@@ -124,6 +125,14 @@ function App() {
         element={
           <ProtectedRoute>
             <WithdrawalRequests />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gift-voucher-requests"
+        element={
+          <ProtectedRoute>
+            <GiftVoucherRequests />
           </ProtectedRoute>
         }
       />
