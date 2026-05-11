@@ -1437,14 +1437,16 @@ export const updateSocialLinks = async (data: SocialLinksUpdateRequest): Promise
 // Withdrawal Threshold Settings Interfaces
 export interface WithdrawalThresholdRequest {
   MinimumWithdrawalAmount: number;
-  DailyWithdrawalRequestLimit: 1 | 2 | 3 | 4 | 5 | 6;
+  DailyWithdrawalRequestLimit?: number;
+  WithdrawalDenominations?: number[];
 }
 
 export interface WithdrawalThresholdResponse {
   message: string;
   data: {
     MinimumWithdrawalAmount: number;
-    DailyWithdrawalRequestLimit: 1 | 2 | 3 | 4 | 5 | 6;
+    DailyWithdrawalRequestLimit?: number;
+    WithdrawalDenominations?: number[];
     updatedAt?: string;
   };
 }
