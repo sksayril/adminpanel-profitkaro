@@ -119,12 +119,12 @@ const Login = () => {
             </form>
 
             <div className="mt-6 flex items-center justify-between text-sm">
-              <button
+              {/* <button
                 onClick={() => navigate('/signup')}
                 className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
               >
                 Create Account
-              </button>
+              </button> */}
               <a
                 href="#"
                 className="text-purple-600 hover:text-purple-700 underline font-medium transition-colors"
